@@ -1,0 +1,33 @@
+:root { --bg: #f3e9dc; --ink: #3a2a22; --accent: #8c2f39; --font-head: 'Bad Script', cursive; --font-body: 'Old Standard TT', serif; --fx-color: #8c2f39; --word-fx: wordInk; }
+.env { position: relative; width: min(84vw, 380px); aspect-ratio: 3 / 2; perspective: 900px; margin-top: 60px; filter: drop-shadow(0 18px 28px rgba(80, 50, 30, .3)); }
+.env-back { position: absolute; inset: 0; z-index: 1; background: #d3bb9b; border-radius: 6px; }
+.env-letter { position: absolute; inset: 7% 6%; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fffaf2; border-radius: 3px; transition: transform 1s .45s cubic-bezier(.2, .8, .3, 1); }
+.env-letter small { font-size: 16px; opacity: .7; }
+.env-letter b { font-family: var(--font-head); font-weight: 400; font-size: clamp(26px, 8vw, 36px); line-height: 1.15; padding: 0 12px; overflow-wrap: anywhere; color: var(--accent); }
+.env-front { position: absolute; inset: 0; z-index: 3; background: #ead7bd; clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%); border-radius: 6px; }
+.env-flap { position: absolute; left: 0; right: 0; top: 0; height: 62%; z-index: 4; background: #e0c8a6; clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top; transition: transform .7s ease; }
+.seal { position: absolute; left: 50%; top: 62%; z-index: 5; width: 78px; height: 78px; margin: -39px 0 0 -39px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b3424f, #741b27 70%); color: #f7dcc0; font-family: var(--font-head); font-size: 36px; box-shadow: 0 4px 10px rgba(70, 10, 20, .5), inset 0 0 0 5px rgba(255, 255, 255, .1); }
+.card.opening .seal { transform: scale(0); opacity: 0; }
+.card.opening .env-flap { transform: rotateX(180deg); z-index: 1; }
+.card.opening .env-letter { transform: translateY(-62%); }
+.photos img { border: 10px solid #fffaf2; box-shadow: 0 10px 24px rgba(80, 50, 30, .25); transform: rotate(-1.5deg); }
+.airmail { position: absolute; left: 0; right: 0; height: 10px; background: repeating-linear-gradient(-45deg, #b3424f 0 16px, #fffaf2 16px 30px, #2f5d8c 30px 46px, #fffaf2 46px 60px); }
+.airmail-top { top: 0; } .airmail-bottom { bottom: 0; }
+.scene-hello .panel { padding: 96px 22px 28px; background: #fffaf2; border-radius: 4px; box-shadow: 0 18px 40px rgba(80, 50, 30, .22); transform: rotate(-1.5deg); }
+.stamp { position: absolute; top: 14px; right: 14px; width: 60px; transform: rotate(4deg); }
+.postmark { position: absolute; top: 18px; right: 62px; width: 112px; color: #8c2f39; opacity: .42; }
+.scene-message .panel { align-items: stretch; padding: 34px 18px 28px 48px; text-align: left; background: linear-gradient(90deg, transparent 34px, rgba(179, 66, 79, .45) 34px 35px, transparent 35px), repeating-linear-gradient(transparent 0 33px, #e4dccb 33px 34px), #fffdf7; box-shadow: 0 16px 34px rgba(80, 50, 30, .2); transform: rotate(.8deg); }
+.message, .message.long { font-family: var(--font-head); line-height: 34px; font-size: 25px; }
+.message.long { font-size: 20px; }
+.signature { text-align: right; }
+.paperclip { position: absolute; top: calc(50% - 176px); left: calc(50% + 92px); z-index: 3; width: 34px; }
+.scene-closing .wax { display: grid; place-items: center; width: 92px; height: 92px; margin-bottom: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b3424f, #741b27 70%); color: #f7dcc0; font-family: var(--font-head); font-size: 42px; box-shadow: 0 5px 12px rgba(70, 10, 20, .45), inset 0 0 0 6px rgba(255, 255, 255, .1); }
+.next-btn { color: var(--accent); font-style: italic; }
+.scene-hello .panel { align-items: flex-start; text-align: left; }
+.eyebrow { margin-bottom: 2px; font-style: italic; font-size: 19px; opacity: 1; }
+.recipient { font-size: clamp(46px, 13vw, 70px); }
+.divider { width: 100%; height: 0; margin: 10px 0 4px; border-bottom: 1px solid #b9ad9a; background: none; opacity: 1; }
+.message { font-size: 22px; }
+.message.long { font-size: 18px; }
+.signature span { font-style: italic; }
+.thanks { border: 1.5px dashed var(--accent); border-radius: 2px; background: none; color: var(--accent); font-style: italic; font-size: 20px; }

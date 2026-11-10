@@ -1,0 +1,28 @@
+:root { --bg: #eaf6ec; --ink: #24452f; --accent: #c2255c; --font-head: 'Oi', serif; --font-body: 'Balsamiq Sans', sans-serif; --fx-color: #f783ac; --word-fx: wordRise; }
+body { font-size: 17px; }
+.field { width: min(96vw, 430px); height: auto; overflow: visible; }
+.grow { transform-box: view-box; transform-origin: 0 0; transform: scale(.3, .22); }
+.card.opening .grow { animation: grow 1.5s cubic-bezier(.2, 1.3, .4, 1) forwards; }
+@keyframes grow { to { transform: scale(1); } }
+.t-tulips .gate-btn { padding: 0 26px; border-radius: 99px; background: var(--accent); color: #fff; font-weight: 700; font-size: 17px; }
+.card.opening .gate-btn { opacity: 0; }
+.message { font-size: clamp(20px, 5.4vw, 26px); }
+.message.long { font-size: clamp(16px, 4.3vw, 19px); }
+body { background: linear-gradient(#cfeaf7, #eaf6ec 55%) fixed; }
+.photos img { border: 8px solid #fff; border-radius: 48% 48% 50% 50% / 26% 26% 74% 74%; box-shadow: 0 14px 30px rgba(60, 120, 80, .28); }
+.sun { position: absolute; top: 7%; left: 10%; width: 86px; height: 86px; border-radius: 50%; background: #ffd66b; box-shadow: 0 0 0 16px rgba(255, 214, 107, .3), 0 0 0 34px rgba(255, 214, 107, .14); }
+.garden-row { position: absolute; left: 0; bottom: 0; width: 100%; max-height: 30vh; }
+.scene { padding-bottom: 22vh; }
+.recipient { font-size: clamp(62px, 18vw, 96px); font-weight: 700; }
+.scene-message .panel { padding: 30px 22px 26px; border-radius: 34px; background: rgba(255, 255, 255, .86); box-shadow: 0 14px 34px rgba(60, 120, 80, .18); }
+.corner-tulip { position: absolute; top: -56px; right: 10px; width: 62px; transform: rotate(14deg); }
+.next-btn { color: var(--accent); font-weight: 700; }
+.scene-hello .panel { align-items: flex-start; text-align: left; }
+.eyebrow { font-weight: 700; opacity: 1; }
+.recipient { font-size: clamp(44px, 13.5vw, 76px); font-weight: 400; line-height: 1.04; transform: rotate(-3deg); text-shadow: 3px 3px 0 #fff; }
+.scene.in .recipient { transform: rotate(-3deg); }
+.divider { display: none; }
+.gate-title { font-size: clamp(24px, 6.6vw, 34px); }
+.section-title, .final-thanks { font-size: clamp(26px, 7.4vw, 38px); line-height: 1.12; color: var(--accent); }
+.signature b { font-size: 28px; }
+.thanks { border: 2.5px solid var(--ink); border-radius: 14px; background: #ffd66b; color: var(--ink); box-shadow: 4px 4px 0 var(--ink); font-weight: 700; }

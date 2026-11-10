@@ -1,0 +1,136 @@
+/**
+ * Список шаблонов. Здесь только оформление: название, цвета, шрифты, подписи.
+ *
+ * Поля:
+ *   id      латиницей, совпадает с именем файла стилей assets/css/<id>.css
+ *   tier    'basic' (обычный) или 'premium' (премиум)
+ *   name    название в каталоге
+ *   blurb   короткое описание в каталоге
+ *   accent  акцентный цвет, bg  цвет фона (их же видно на карточке в каталоге)
+ *   fx      частицы поверх открытки: 'none' | 'petals' | 'stars' | 'gold'
+ *   openMs  сколько миллисекунд длится анимация открытия
+ *   fonts   параметры Google Fonts (часть адреса после css2?), шрифты обязательно с казахскими буквами
+ *   labels  подписи на открытке: eyebrow над именем, from перед подписью отправителя, photos над фото
+ */
+export const DESIGNS = [
+  {
+    id: 'envelope',
+    tier: 'basic',
+    name: 'Конверт',
+    blurb: 'Письмо с сургучной печатью',
+    accent: '#8c2f39',
+    bg: '#f3e9dc',
+    fx: 'none',
+    openMs: 1500,
+    fonts: 'family=Bad+Script&family=Old+Standard+TT:ital@0;1',
+    labels: { eyebrow: 'Это письмо тебе,', from: 'С теплом,', photos: 'На память' },
+  },
+  {
+    id: 'tulips',
+    tier: 'basic',
+    name: 'Тюльпаны',
+    blurb: 'Цветы вырастают от касания',
+    accent: '#d6336c',
+    bg: '#eaf6ec',
+    fx: 'petals',
+    openMs: 2200,
+    fonts: 'family=Oi&family=Balsamiq+Sans:wght@400;700',
+    labels: { eyebrow: 'Весна пришла к тебе,', from: 'От всей души,', photos: 'Светлый момент' },
+  },
+  {
+    id: 'night',
+    tier: 'basic',
+    name: 'Звёздная ночь',
+    blurb: 'Падающая звезда и желание',
+    accent: '#f5c66b',
+    bg: '#0d1533',
+    fx: 'stars',
+    openMs: 1700,
+    fonts: 'family=Cormorant+Unicase:wght@400;600&family=Literata:ital@0;1',
+    labels: { eyebrow: 'Самая яркая звезда', from: 'Желаю от всего сердца,', photos: 'Наш снимок среди звёзд' },
+  },
+  {
+    id: 'polaroid',
+    tier: 'basic',
+    name: 'Полароид',
+    blurb: 'Снимок проявляется на глазах',
+    accent: '#7a4a21',
+    bg: '#c9a77c',
+    fx: 'none',
+    openMs: 2100,
+    fonts: 'family=Caveat:wght@500;700&family=Shantell+Sans',
+    labels: { eyebrow: 'Этот кадр тебе,', from: 'Подпись на обороте:', photos: 'Кадр на память' },
+  },
+  {
+    id: 'watercolor',
+    tier: 'basic',
+    name: 'Акварель',
+    blurb: 'Краски расцветают по бумаге',
+    accent: '#a0527d',
+    bg: '#fffaf5',
+    fx: 'petals',
+    openMs: 1800,
+    fonts: 'family=Gabriela&family=Marmelad',
+    labels: { eyebrow: 'Нежно и только тебе,', from: 'С любовью,', photos: 'Акварельный день' },
+  },
+  {
+    id: 'gold',
+    tier: 'premium',
+    name: 'Чёрное золото',
+    blurb: 'Двери в стиле ар-деко и золотая пыль',
+    accent: '#d9b25f',
+    bg: '#0c0b09',
+    fx: 'gold',
+    openMs: 1900,
+    fonts: 'family=Cormorant+SC:wght@400;600&family=Old+Standard+TT',
+    labels: { eyebrow: 'Персональное приглашение', from: 'С восхищением,', photos: 'Галерея' },
+  },
+  {
+    id: 'garden',
+    tier: 'premium',
+    name: 'Ботанический сад',
+    blurb: 'Листья расступаются, открывая сад',
+    accent: '#e7d8a8',
+    bg: '#12302a',
+    fx: 'petals',
+    openMs: 2000,
+    fonts: 'family=Alice&family=Kurale',
+    labels: { eyebrow: 'В этом саду цветёт', from: 'Посажено с любовью:', photos: 'Аллея воспоминаний' },
+  },
+  {
+    id: 'cinema',
+    tier: 'premium',
+    name: 'Премьера',
+    blurb: 'Обратный отсчёт и фильм о вас',
+    accent: '#f2e3c6',
+    bg: '#14110f',
+    fx: 'none',
+    openMs: 3400,
+    fonts: 'family=Cuprum:wght@400;700&family=PT+Sans:wght@400;700',
+    labels: { eyebrow: 'В главной роли', from: 'Режиссёр и автор сценария:', photos: 'Кадры из фильма' },
+  },
+  {
+    id: 'silk',
+    tier: 'premium',
+    name: 'Шёлк и розы',
+    blurb: 'Занавес открывается под дождь лепестков',
+    accent: '#e9c98f',
+    bg: '#3d0d1b',
+    fx: 'petals',
+    openMs: 2200,
+    fonts: 'family=Yeseva+One&family=Forum',
+    labels: { eyebrow: 'Сегодня всё для тебя,', from: 'С нежностью,', photos: 'Самые красивые мгновения' },
+  },
+  {
+    id: 'ornament',
+    tier: 'premium',
+    name: 'Шаңырақ',
+    blurb: 'Казахский орнамент и шаңырақ',
+    accent: '#e8c36a',
+    bg: '#0f4c5c',
+    fx: 'gold',
+    openMs: 2300,
+    fonts: 'family=Podkova:wght@500;700&family=Philosopher',
+    labels: { eyebrow: 'Құрметті', from: 'Шын жүректен,', photos: 'Естелік' },
+  },
+];

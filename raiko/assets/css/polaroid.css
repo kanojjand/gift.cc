@@ -1,0 +1,37 @@
+:root { --bg: #c9a77c; --ink: #2f2115; --accent: #6b3b14; --font-head: 'Caveat', cursive; --font-body: 'Shantell Sans', cursive; --fx-color: #fff; --word-fx: wordPop; }
+body, .gate { background-color: var(--bg); background-image: radial-gradient(rgba(70, 40, 10, .22) 1px, transparent 1.5px), radial-gradient(rgba(255, 240, 210, .2) 1px, transparent 1.5px); background-size: 9px 9px, 13px 13px; }
+.pola { position: relative; display: block; width: min(76vw, 310px); padding: 14px 14px 0; background: #fdfcf7; box-shadow: 0 16px 30px rgba(50, 30, 10, .4); transform: rotate(-3deg); }
+.pola:active { transform: rotate(-3deg) scale(.98); }
+.tape { position: absolute; top: -14px; left: 50%; width: 110px; height: 32px; margin-left: -55px; background: rgba(240, 225, 170, .78); transform: rotate(2deg); }
+.film { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: #2b2723; }
+.film img, .film-art { display: block; width: 100%; height: 100%; object-fit: cover; }
+.film-art { background: radial-gradient(circle at 50% 45%, #f7c6d0 0 18%, transparent 19%), radial-gradient(circle at 34% 34%, #ee8fa8 0 16%, transparent 17%), radial-gradient(circle at 66% 34%, #ee8fa8 0 16%, transparent 17%), radial-gradient(circle at 32% 60%, #ee8fa8 0 16%, transparent 17%), radial-gradient(circle at 68% 60%, #ee8fa8 0 16%, transparent 17%), #8fb9a1; }
+.film-cover { position: absolute; inset: 0; background: #26221e; transition: opacity 1.7s ease; }
+.card.opening .film-cover { opacity: 0; }
+.pola-caption { display: block; padding: 8px 4px 12px; font-family: var(--font-head); font-size: 32px; line-height: 1.15; color: #2f2115; overflow-wrap: anywhere; }
+.photos figure { padding: 10px 10px 38px; background: #fdfcf7; box-shadow: 0 10px 22px rgba(50, 30, 10, .35); transform: rotate(1.5deg); }
+.photos figure:nth-child(even) { transform: rotate(-2deg); }
+.scene-hello .panel { padding: 30px 18px 16px; background: #fdf8e7; box-shadow: 0 10px 22px rgba(50, 30, 10, .35); transform: rotate(-2.5deg); clip-path: polygon(0 3%, 6% 0, 14% 3%, 26% 0, 38% 3%, 52% 0, 66% 3%, 80% 0, 92% 3%, 100% 0, 100% 97%, 92% 100%, 78% 97%, 62% 100%, 46% 97%, 30% 100%, 14% 97%, 0 100%); }
+.recipient { font-weight: 700; }
+.doodle { position: absolute; width: 44px; }
+.doodle-heart { top: 10px; right: 14px; transform: rotate(14deg); }
+.doodle-star { bottom: 12px; left: 14px; transform: rotate(-12deg); }
+.scroll-hint { color: #2f2115; opacity: .85; }
+.scene-message .panel { align-items: stretch; padding: 40px 18px 26px 42px; text-align: left; background: radial-gradient(circle at 18px 26px, #c9a77c 7px, transparent 8px) 0 0 / 100% 52px, repeating-linear-gradient(transparent 0 31px, #b9d3e8 31px 32px), #fffefa; box-shadow: 0 12px 24px rgba(50, 30, 10, .38); transform: rotate(1.4deg); }
+.message, .message.long { font-family: var(--font-head); font-size: 28px; line-height: 32px; font-weight: 500; }
+.message.long { font-size: 22px; }
+.tape-strip { position: absolute; top: -14px; left: calc(50% - 60px); width: 120px; height: 30px; background: rgba(240, 225, 170, .82); transform: rotate(-2deg); }
+.scene-photos { justify-content: flex-start; padding-top: 16vh; }
+.section-title { color: #2f2115; }
+.string { position: absolute; top: calc(16vh + 92px); left: 0; right: 0; height: 2px; background: #5b3a1b; }
+.photos { padding-top: 14px; }
+.photos figure { position: relative; }
+.photos figure::before { content: ''; position: absolute; top: -18px; left: calc(50% - 7px); width: 14px; height: 38px; border-radius: 3px; background: #b98a4e; box-shadow: inset 0 0 0 2px #8a6030; }
+.scene-closing .doodle { position: static; width: 74px; margin-bottom: 14px; }
+.next-btn { color: #2f2115; }
+.eyebrow { font-size: 17px; opacity: 1; }
+.scene-hello .recipient { font-size: clamp(62px, 19vw, 96px); font-weight: 700; line-height: .95; transform: rotate(-2deg); }
+.scene.in .recipient { transform: rotate(-2deg); }
+.divider { display: none; }
+.signature { font-size: 16px; }
+.thanks { border-radius: 0; background: #fdf8e7; color: #2f2115; box-shadow: 2px 3px 0 rgba(50, 30, 10, .5); transform: rotate(-2deg); font-size: 17px; }

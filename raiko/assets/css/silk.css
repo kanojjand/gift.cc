@@ -1,0 +1,28 @@
+:root { --bg: #3d0d1b; --ink: #fbeadb; --accent: #e9c98f; --font-head: 'Yeseva One', serif; --font-body: 'Forum', serif; --fx-color: #e0526f; --word-fx: wordGlow; }
+body { font-size: 17px; background: radial-gradient(circle at 50% 30%, #5a1529, #2c0813) fixed; }
+.card.opening .gate { background: transparent; }
+.curtain { position: absolute; top: 0; bottom: 0; width: 51%; background: repeating-linear-gradient(90deg, #5e1229 0 14px, #8f1f3f 26px, #6f1630 40px, #4e0e22 56px); box-shadow: 0 0 40px rgba(0, 0, 0, .55); transition: transform 2s cubic-bezier(.65, 0, .25, 1); }
+.curtain-l { left: 0; transform-origin: left; }
+.curtain-r { right: 0; transform-origin: right; }
+.card.opening .curtain { transform: scaleX(.1); }
+.silk-center { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 30px 26px; max-width: 86vw; background: rgba(36, 6, 15, .82); border: 1px solid var(--accent); transition: opacity .45s; }
+.t-silk .gate-title { color: var(--accent); }
+.tassel { padding: 0 24px; border-radius: 4px; background: linear-gradient(#f0d6a5, #c9a05b); color: #3d0d1b; font-size: 16px; }
+.card.opening .silk-center { opacity: 0; }
+.message { font-size: clamp(21px, 5.6vw, 27px); }
+.message.long { font-size: clamp(16px, 4.4vw, 20px); }
+.valance { position: absolute; top: 0; left: 0; width: 100%; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .45)); }
+.rose { width: min(58vw, 220px); margin-bottom: 4px; }
+.scene-closing .rose { width: 170px; margin-bottom: 12px; }
+.recipient { font-size: clamp(58px, 17vw, 92px); }
+.scene-message .panel { padding: 38px 24px; background: radial-gradient(circle at 0 0, transparent 22px, #f8eadb 23px) top left / 51% 51% no-repeat, radial-gradient(circle at 100% 0, transparent 22px, #f8eadb 23px) top right / 51% 51% no-repeat, radial-gradient(circle at 0 100%, transparent 22px, #f8eadb 23px) bottom left / 51% 51% no-repeat, radial-gradient(circle at 100% 100%, transparent 22px, #f8eadb 23px) bottom right / 51% 51% no-repeat; color: #3d0d1b; }
+.scene-message .signature b { color: #8f1f3f; }
+.scene { padding-top: 96px; }
+.photos img { border-radius: 50%; aspect-ratio: 4 / 5; }
+.next-btn { color: var(--accent); letter-spacing: .04em; }
+.recipient { font-size: clamp(50px, 15vw, 82px); line-height: 1.05; }
+.divider { display: none; }
+.message { font-size: clamp(22px, 5.8vw, 27px); line-height: 1.42; }
+.signature b { font-size: 30px; }
+.thanks { border-radius: 2px; font-size: 19px; letter-spacing: .03em; }
+.photos img { border: 1px solid var(--accent); outline: 1px solid var(--accent); outline-offset: 5px; margin: 6px; width: calc(100% - 12px); }

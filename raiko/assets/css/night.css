@@ -1,0 +1,32 @@
+:root { --bg: #0d1533; --ink: #e9ecf8; --accent: #f5c66b; --font-head: 'Cormorant Unicase', serif; --font-body: 'Literata', serif; --fx-color: #fff6dc; --word-fx: wordGlow; }
+body { background: linear-gradient(#0a1029, #1c2558); background-attachment: fixed; }
+.gate { background: radial-gradient(circle at 50% 120%, #36408a, transparent 60%), radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1.5px 1.5px at 72% 18%, #fff, transparent), radial-gradient(2px 2px at 86% 56%, #fff, transparent), radial-gradient(1.5px 1.5px at 12% 72%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 84%, #fff, transparent), #0a1029; }
+.moon { position: absolute; top: 9%; left: 12%; width: 74px; height: 74px; border-radius: 50%; box-shadow: 14px 10px 0 0 #f4e3b5; }
+.star { width: 132px; height: 132px; animation: pulse 2.2s ease-in-out infinite; }
+.star svg { width: 100%; height: 100%; fill: var(--accent); filter: drop-shadow(0 0 22px rgba(245, 198, 107, .95)); }
+@keyframes pulse { 50% { transform: scale(1.14); } }
+.card.opening .star { animation: shoot 1.3s ease-in forwards; }
+@keyframes shoot { to { transform: translate(60vw, -70vh) scale(.15) rotate(180deg); opacity: .2; } }
+.photos figure { flex-basis: min(70%, 300px); }
+.photos img { aspect-ratio: 1; border-radius: 50%; border: 3px solid #f5c66b; box-shadow: 0 0 46px rgba(245, 198, 107, .5); }
+.big-moon { position: absolute; top: -70px; right: -70px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle at 40% 45%, #fff6dc, #f1dca6 62%, #d9bd7c); box-shadow: 0 0 90px 34px rgba(245, 214, 150, .32); }
+.mountains { position: absolute; left: 0; bottom: 0; width: 100%; max-height: 26vh; }
+.constellation { width: min(100%, 300px); margin-bottom: 26px; }
+.recipient { color: #fff6dc; text-shadow: 0 0 34px rgba(245, 198, 107, .75); }
+.message { font-style: italic; }
+.signature b { color: var(--accent); }
+.orbit { position: absolute; top: 50%; left: 50%; width: min(96vw, 420px); aspect-ratio: 1; margin: calc(min(96vw, 420px) / -2) 0 0 calc(min(96vw, 420px) / -2); border: 1px dashed rgba(245, 198, 107, .4); border-radius: 50%; animation: orbit 14s linear infinite; }
+.orbit b { position: absolute; top: -6px; left: calc(50% - 6px); width: 12px; height: 12px; border-radius: 50%; background: #f5c66b; box-shadow: 0 0 14px #f5c66b; }
+@keyframes orbit { to { transform: rotate(360deg); } }
+.next-btn { color: var(--accent); font-style: italic; }
+.scene-hello { align-items: flex-start; justify-content: flex-end; padding-bottom: 30vh; }
+.scene-hello .panel { align-items: flex-start; text-align: left; }
+.scroll-hint { align-self: flex-start; }
+.eyebrow { font-style: italic; opacity: 1; }
+.recipient { font-size: clamp(54px, 16.5vw, 90px); font-weight: 400; line-height: 1; }
+.divider { display: none; }
+.scene-message .panel { align-items: stretch; }
+.message, .message.long { text-align: left; }
+.message { font-size: clamp(22px, 5.8vw, 28px); line-height: 1.5; }
+.signature { text-align: right; font-style: italic; }
+.thanks { border: 1px solid var(--accent); border-radius: 0; background: none; color: var(--accent); font-style: italic; }

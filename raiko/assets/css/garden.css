@@ -1,0 +1,28 @@
+:root { --bg: #12302a; --ink: #f2ecd9; --accent: #e7d8a8; --font-head: 'Alice', serif; --font-body: 'Kurale', serif; --fx-color: #f4e6cf; --word-fx: wordRise; }
+.card.opening .gate { background: transparent; }
+.leaf-panel { position: absolute; top: 0; height: 100%; width: 56%; overflow: visible; transition: transform 1.8s cubic-bezier(.65, 0, .3, 1); }
+.leaf-l { left: 0; }
+.leaf-r { right: 0; transform: scaleX(-1); }
+.card.opening .leaf-l { transform: translateX(-105%) rotate(-4deg); }
+.card.opening .leaf-r { transform: scaleX(-1) translateX(-105%) rotate(-4deg); }
+.wreath { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: min(78vw, 310px); aspect-ratio: 1; padding: 34px; border-radius: 50%; background: #12302a; border: 2px solid var(--accent); outline: 8px double rgba(231, 216, 168, .45); outline-offset: 6px; transition: opacity .45s; }
+.t-garden .gate-title { font-style: italic; color: var(--accent); }
+.t-garden .gate-btn { padding: 0 22px; border-radius: 99px; background: var(--accent); color: #12302a; font-weight: 600; }
+.card.opening .wreath { opacity: 0; }
+.recipient { font-style: italic; }
+.photos img { border-radius: 999px 999px 0 0; border: 2px solid var(--accent); padding: 6px; }
+.vine { position: absolute; width: min(70vw, 340px); }
+.vine-top { top: -6px; left: -6px; }
+.vine-bottom { bottom: -6px; right: -6px; transform: rotate(180deg); }
+.scene-hello .panel { padding: 26px 20px 34px; border-radius: 999px 999px 0 0; background: #1a4238; border: 2px solid var(--accent); }
+.peony { width: 150px; margin-top: 18px; }
+.scene-message .panel { align-items: stretch; padding: 30px 22px 24px; text-align: left; background: #f6efdc; color: #23382f; box-shadow: 0 16px 36px rgba(0, 0, 0, .4); }
+.pressed-leaf { width: 190px; margin: 0 0 12px -8px; }
+.scene-message .signature b { color: #1f5546; }
+.scene-closing .peony { width: 180px; margin: 0 0 16px; }
+.next-btn { color: var(--accent); }
+.t-garden .gate-title, .recipient { font-style: normal; }
+.recipient { font-size: clamp(46px, 13.5vw, 74px); }
+.divider { display: none; }
+.message { font-size: clamp(21px, 5.6vw, 26px); line-height: 1.45; }
+.thanks { border-radius: 2px; }

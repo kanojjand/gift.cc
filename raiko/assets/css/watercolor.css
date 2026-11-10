@@ -1,0 +1,31 @@
+:root { --bg: #fffaf5; --ink: #4a3644; --accent: #93406f; --font-head: 'Gabriela', serif; --font-body: 'Marmelad', sans-serif; --fx-color: #e9a9c4; --word-fx: wordBlur; }
+.blob { position: absolute; width: 58vmin; height: 58vmin; border-radius: 47% 53% 62% 38% / 44% 58% 42% 56%; filter: blur(26px); opacity: .68; transition: transform 1.6s ease-out; }
+.b1 { top: 4%; left: -14%; background: #f9c5a7; }
+.b2 { top: 10%; right: -16%; background: #d7bdf0; }
+.b3 { bottom: 6%; left: -8%; background: #bfe0ea; }
+.b4 { bottom: 0; right: -12%; background: #f6b6cf; }
+.card.opening .blob { transform: scale(3.2) rotate(40deg); }
+.wc-center { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.t-watercolor .gate-btn { padding: 0 26px; border-radius: 99px; border: 1.5px solid var(--accent); background: rgba(255, 255, 255, .72); color: var(--accent); font-size: 20px; }
+.card.opening .wc-center { opacity: 0; transition: opacity .5s; }
+.photos img { border-radius: 42% 58% 52% 48% / 46% 44% 56% 54%; box-shadow: 0 0 0 12px rgba(215, 189, 240, .4), 0 0 0 26px rgba(249, 197, 167, .28); }
+.photos { padding-top: 34px; padding-bottom: 34px; }
+.wash { position: absolute; border-radius: 47% 53% 62% 38% / 44% 58% 42% 56%; filter: blur(34px); opacity: .5; animation: drift 16s ease-in-out infinite alternate; }
+.w1 { top: -8%; left: -22%; width: 74vmin; height: 74vmin; background: #f9c5a7; }
+.w2 { top: 34%; right: -30%; width: 80vmin; height: 80vmin; background: #d7bdf0; animation-delay: -5s; }
+.w3 { bottom: -14%; left: -14%; width: 76vmin; height: 76vmin; background: #f6b6cf; animation-delay: -9s; }
+@keyframes drift { to { transform: translate(7vw, 5vh) rotate(24deg) scale(1.12); } }
+.brush { position: absolute; top: 50%; left: 50%; width: min(112%, 460px); transform: translate(-50%, -46%); }
+.eyebrow, .recipient, .scene-hello .panel > div { position: relative; z-index: 1; }
+.recipient { font-size: clamp(56px, 16vw, 86px); }
+.water-flowers { width: 150px; margin-bottom: 8px; }
+.scene-closing .water-flowers { width: 210px; margin-bottom: 18px; }
+.next-btn { color: var(--accent); }
+.recipient { font-size: clamp(46px, 14vw, 76px); }
+.divider { display: none; }
+.scene-message .panel { align-items: flex-end; text-align: right; }
+.water-flowers { align-self: flex-start; }
+.scene-closing .water-flowers { align-self: center; }
+.message { font-size: clamp(21px, 5.6vw, 26px); line-height: 1.5; }
+.signature b { font-size: 30px; }
+.thanks { min-height: 44px; padding: 0 6px; border-bottom: 2px solid var(--accent); border-radius: 0; background: none; color: var(--accent); }

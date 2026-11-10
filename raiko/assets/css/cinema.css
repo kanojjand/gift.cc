@@ -1,0 +1,42 @@
+:root { --bg: #14110f; --ink: #f2e3c6; --accent: #f2e3c6; --font-head: 'Cuprum', sans-serif; --font-body: 'PT Sans', sans-serif; --fx-color: #fff; --word-fx: wordFade; }
+.leader { position: relative; width: min(74vw, 300px); aspect-ratio: 1; border-radius: 50%; border: 3px solid var(--ink); overflow: hidden; background: #2a2521; }
+.sweep { position: absolute; inset: 0; background: conic-gradient(rgba(242, 227, 198, .4) 0 90deg, transparent 90deg); opacity: 0; }
+.cross { position: absolute; inset: 0; background: linear-gradient(var(--ink), var(--ink)) center / 100% 1px no-repeat, linear-gradient(var(--ink), var(--ink)) center / 1px 100% no-repeat; opacity: .5; }
+.digits span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-head); font-size: 130px; opacity: 0; }
+.play { position: absolute; inset: 0; width: 100%; height: 100%; font-size: 70px; color: var(--ink); }
+.card.opening .play { opacity: 0; pointer-events: none; }
+.card.opening .sweep { opacity: 1; animation: spin 1s linear 3; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.card.opening .digits span { animation: flash 1s steps(1) both; }
+.card.opening .digits span:nth-child(2) { animation-delay: 1s; }
+.card.opening .digits span:nth-child(3) { animation-delay: 2s; }
+@keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+.t-cinema .gate-title { font-size: clamp(22px, 6vw, 30px); text-transform: uppercase; letter-spacing: .03em; }
+.eyebrow { text-transform: uppercase; letter-spacing: .24em; font-family: var(--font-head); font-size: 15px; }
+.recipient { text-transform: uppercase; font-weight: 600; letter-spacing: .02em; }
+.signature b { text-transform: uppercase; }
+.final-thanks { text-transform: uppercase; }
+.photos { gap: 0; padding: 22px 0; background: #000; background-image: repeating-linear-gradient(90deg, #f2e3c6 0 12px, transparent 12px 28px), repeating-linear-gradient(90deg, #f2e3c6 0 12px, transparent 12px 28px); background-size: 100% 10px; background-position: 0 6px, 0 calc(100% - 6px); background-repeat: no-repeat; }
+.photos figure { padding: 0 6px; }
+.photos { transform: rotate(-3deg) scale(1.08); }
+.spot { position: absolute; top: -10%; width: 90vw; height: 130%; opacity: .2; background: linear-gradient(#f2e3c6, transparent 78%); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); transform-origin: top center; animation: sway 7s ease-in-out infinite alternate; }
+.spot-l { left: -44vw; transform: rotate(-14deg); }
+.spot-r { right: -44vw; transform: rotate(14deg); animation-delay: -3s; animation-direction: alternate-reverse; }
+@keyframes sway { from { rotate: -7deg; } to { rotate: 7deg; } }
+.recipient { font-size: clamp(66px, 20vw, 118px); line-height: 1; }
+.poster-tag { order: 5; margin: 18px 0 0; font-family: var(--font-head); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.poster-stars { order: 4; margin: 0; color: #f0b429; font-size: 22px; letter-spacing: .2em; }
+.scene-hello .divider { background: none; height: 0; margin: 10px auto; }
+.scene-message { background: linear-gradient(#000 0 13vh, transparent 13vh calc(100% - 13vh), #000 calc(100% - 13vh)); }
+.message, .message.long { font-family: var(--font-head); font-weight: 400; letter-spacing: .01em; text-shadow: 0 2px 6px #000; }
+.message { font-size: clamp(25px, 7vw, 32px); }
+.message.long { font-size: clamp(19px, 5.2vw, 24px); }
+.signature { text-transform: uppercase; font-family: var(--font-head); letter-spacing: .08em; font-size: 14px; }
+.next-btn { font-family: var(--font-head); text-transform: uppercase; letter-spacing: .12em; color: var(--accent); }
+.recipient { font-size: clamp(84px, 26vw, 148px); font-weight: 700; line-height: .86; letter-spacing: -.01em; transform: scaleY(1.18); transform-origin: top; margin-bottom: .18em; }
+.scene.in .recipient { transform: scaleY(1.18); }
+.message, .message.long { font-family: var(--font-body); font-weight: 700; color: #f7e15a; text-shadow: 0 2px 3px #000; }
+.message { font-size: clamp(20px, 5.4vw, 25px); line-height: 1.4; }
+.message.long { font-size: clamp(16px, 4.3vw, 19px); }
+.signature b { font-size: 34px; }
+.thanks { border-radius: 0; color: #14110f; text-transform: uppercase; letter-spacing: .08em; font-size: 15px; font-weight: 700; -webkit-mask: radial-gradient(circle 8px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 8px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat; mask: radial-gradient(circle 8px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 8px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat; }
