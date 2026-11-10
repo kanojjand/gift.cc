@@ -2,6 +2,20 @@
   const card = document.querySelector('.card');
   if (!card) return;
 
+  /* Шрифты подключаются без задержки первого экрана; имя проявляется, когда они готовы (не дольше FONT_WAIT_MS). */
+  const FONT_WAIT_MS = 1000;
+  const fontLink = document.getElementById('card-fonts');
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const fontCssLoaded = new Promise((resolve) => {
+    if (!fontLink || fontLink.sheet) return resolve();
+    fontLink.addEventListener('load', resolve, { once: true });
+    fontLink.addEventListener('error', resolve, { once: true });
+  });
+  if (fontLink) fontLink.media = 'all';
+  const fontsReady = fontCssLoaded.then(nextFrame).then(() => document.fonts?.ready);
+  const fontTimeout = new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS));
+  Promise.race([fontsReady, fontTimeout]).then(() => card.classList.remove('fonts-wait'));
+
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const audio = card.querySelector('.bg-music');
   const muteButton = card.querySelector('.mute');
@@ -137,10 +151,38 @@
     document.head.append(link);
   }
 
+  /* Фото начинают грузиться сразу после открытия, пока читают текст: к галерее они уже готовы. */
+  function preloadPhotos() {
+    card.querySelectorAll('.photos img[loading="lazy"]').forEach((image) => {
+      image.loading = 'eager';
+    });
+  }
+
+  /* Точки под галереей: сколько фото и какое сейчас на экране. */
+  function setupPhotoDots() {
+    const gallery = card.querySelector('.photos');
+    const figures = gallery ? [...gallery.querySelectorAll('figure')] : [];
+    if (figures.length < 2 || !('IntersectionObserver' in window)) return;
+    const dots = document.createElement('div');
+    dots.className = 'photo-dots reveal';
+    dots.setAttribute('aria-hidden', 'true');
+    dots.append(...figures.map(() => document.createElement('i')));
+    dots.firstChild.classList.add('on');
+    gallery.after(dots);
+    const observer = new IntersectionObserver((entries) => {
+      entries.filter((entry) => entry.isIntersecting).forEach((entry) => {
+        const current = figures.indexOf(entry.target);
+        [...dots.children].forEach((dot, index) => dot.classList.toggle('on', index === current));
+      });
+    }, { root: gallery, threshold: 0.6 });
+    figures.forEach((figure) => observer.observe(figure));
+  }
+
   function open() {
     if (opened) return;
     opened = true;
     card.classList.add('opening');
+    preloadPhotos();
     if (card.dataset.track === '1') navigator.sendBeacon(`/c/${card.dataset.code}/opened`);
     loadBrandFonts();
     startMusic();
@@ -210,8 +252,10 @@
     if (widest > available) name.style.setProperty('font-size', `${Math.floor((parseFloat(style.fontSize) * available) / widest)}px`, 'important');
   }
 
-  fitRecipientName().catch((error) => console.warn('[card] не удалось подогнать имя', error));
+  /* Подгонять имя можно только когда стили шрифтов уже пришли, иначе замер будет по запасному шрифту. */
+  fontCssLoaded.then(fitRecipientName).catch((error) => console.warn('[card] не удалось подогнать имя', error));
   splitMessageIntoWords();
+  setupPhotoDots();
   card.querySelector('.gate-btn')?.addEventListener('click', open);
 
   if (audio) {

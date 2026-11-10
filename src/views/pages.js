@@ -1,5 +1,5 @@
 import { BRAND, whatsappLink } from '../brand.js';
-import { TEMPLATES } from '../tiers.js';
+import { TEMPLATES, TIERS } from '../tiers.js';
 import { asset } from './assets.js';
 import { html, raw } from './html.js';
 
@@ -89,9 +89,9 @@ export function landingPage() {
       <p class="eyebrow">${BRAND.tagline}</p>
       <h1>Поздравление, которое живёт внутри букета</h1>
       <p class="lead">QR-код на открытке открывает страницу с именем, словами, фото и музыкой.</p>
-      <h2>Обычные шаблоны</h2>
+      <h2>Базовые шаблоны, до ${TIERS.basic.maxPhotos} фото</h2>
       <div class="tpl-list">${group('basic')}</div>
-      <h2>Премиум, до 5 фото</h2>
+      <h2>Премиум, до ${TIERS.premium.maxPhotos} фото</h2>
       <div class="tpl-list">${group('premium')}</div>
       <nav class="contact-row">${contactLinks()}</nav>
     </main>`,

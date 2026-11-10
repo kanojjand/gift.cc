@@ -15,6 +15,10 @@ img { display: block; max-width: 100%; }
 }
 .card.opened .gate { opacity: 0; visibility: hidden; pointer-events: none; }
 .gate-title { margin: 0; font-family: var(--font-head); font-size: clamp(30px, 8vw, 42px); line-height: 1.15; overflow-wrap: anywhere; position: relative; z-index: 2; }
+/* Пока грузится шрифт, имя на первом экране скрыто, чтобы не прыгало со стандартного шрифта на красивый. Не дольше 1,2 секунды. */
+.gate-title, .env-letter b, .pola-caption { transition: opacity .45s ease; }
+.card.fonts-wait :is(.gate-title, .env-letter b, .pola-caption) { opacity: 0; animation: fonts-late .45s ease 1.2s forwards; }
+@keyframes fonts-late { to { opacity: 1; } }
 .gate-hint { margin: 0; font-size: 16px; opacity: .78; position: relative; z-index: 2; }
 .gate-btn { min-height: 48px; position: relative; z-index: 3; transition: transform .25s ease, opacity .4s ease; -webkit-tap-highlight-color: transparent; }
 .gate-btn:active { transform: scale(.96); }
@@ -63,6 +67,10 @@ img { display: block; max-width: 100%; }
 .photos figure { flex: 0 0 min(78%, 360px); margin: 0; scroll-snap-align: center; }
 .photos img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .swipe-hint { margin: 18px 0 0; font-size: 16px; opacity: .65; }
+.photo-dots { display: flex; justify-content: center; gap: 9px; margin-top: 16px; }
+.photo-dots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .3; transition: opacity .25s ease, transform .25s ease; }
+.photo-dots i.on { opacity: 1; transform: scale(1.35); background: var(--accent); }
+.photo-dots + .swipe-hint { margin-top: 10px; }
 
 .final-thanks { margin: 0 0 28px; font-family: var(--font-head); font-size: clamp(34px, 10vw, 48px); line-height: 1.2; position: relative; z-index: 1; }
 .thanks { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 26px; border-radius: 99px; background: var(--accent); color: var(--bg); font-family: var(--font-body); font-size: 18px; text-decoration: none; }

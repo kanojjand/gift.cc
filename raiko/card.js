@@ -1,7 +1,7 @@
 import { BRAND, whatsappLink } from '../src/brand.js';
 import { closingLine, renderBackdrop, renderSceneDecor } from './decor.js';
 import { renderDivider, renderGate } from './gates.js';
-import { asset } from '../src/views/assets.js';
+import { asset, designFileText } from '../src/views/assets.js';
 import { html, raw } from '../src/views/html.js';
 import { brandMark, contactLinks, documentPage } from '../src/views/pages.js';
 
@@ -78,13 +78,19 @@ function draftControls() {
     </dialog>`;
 }
 
+/**
+ * Стили открытки встроены в страницу, шрифты грузятся параллельно и не задерживают первый экран:
+ * на телефоне открытка показывается сразу после HTML. Имя на первом экране проявляется, когда шрифт готов.
+ */
 function headLinks(template) {
+  const fontsUrl = `https://fonts.googleapis.com/css2?${template.fonts}&display=swap`;
   return html`
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?${template.fonts}&display=swap">
-    <link rel="stylesheet" href="${asset('design/css/card-base.css')}">
-    <link rel="stylesheet" href="${asset(`design/css/${template.id}.css`)}">
+    <link rel="preload" as="style" href="${fontsUrl}">
+    <link id="card-fonts" rel="stylesheet" href="${fontsUrl}" media="print">
+    <noscript><link rel="stylesheet" href="${fontsUrl}"></noscript>
+    <style>${raw(designFileText('css/card-base.css'))}${raw(designFileText(`css/${template.id}.css`))}</style>
     <script src="${asset('design/js/card.js')}" defer></script>`;
 }
 
@@ -101,7 +107,7 @@ export function renderCard({ template, sender, recipient, message, photoUrls, so
     themeColor: template.bg,
     head: html`${headLinks(template)}${mode === 'draft' ? html`<script src="${asset('js/draft.js')}" defer></script>` : ''}`,
     bodyClass: `locked mode-${mode}`,
-    body: html`<main class="card t-${template.id}" data-fx="${template.fx}" data-open-ms="${template.openMs}" data-code="${code ?? ''}" data-track="${mode === 'live' && !activatedNotice ? '1' : '0'}">
+    body: html`<main class="card t-${template.id} fonts-wait" data-fx="${template.fx}" data-open-ms="${template.openMs}" data-code="${code ?? ''}" data-track="${mode === 'live' && !activatedNotice ? '1' : '0'}">
       <div class="backdrop" aria-hidden="true">${renderBackdrop(template.id)}</div>
       <canvas class="fx" aria-hidden="true"></canvas>
       ${songUrl ? html`<audio class="bg-music" src="${songUrl}" loop preload="none"></audio>

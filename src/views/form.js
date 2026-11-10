@@ -2,26 +2,32 @@ import { LIMITS } from '../config.js';
 import { asset } from './assets.js';
 import { html } from './html.js';
 import { brandFonts, brandLockup, documentPage } from './pages.js';
+import { occasionsForTier, suggestedOccasion, TEXT_LANGS } from '../texts.js';
 
-const PHRASES = Object.freeze([
-  ['День рождения', 'С днём рождения! Пусть этот год подарит тебе много радости, тёплых встреч и исполнит то, о чём ты мечтаешь.'],
-  ['8 марта', 'С 8 Марта! Пусть в твоей жизни всегда будет весна: много цветов, улыбок и людей, которые тебя берегут.'],
-  ['Любимой', 'Ты делаешь каждый мой день лучше. Спасибо, что ты есть. Эти цветы только малая часть того, что я хочу тебе сказать.'],
-  ['Маме', 'Мама, спасибо за твою заботу, терпение и любовь. Пусть рядом с тобой всегда будет тепло, а сердце будет спокойно.'],
-  ['Спасибо', 'Спасибо за всё, что ты делаешь. Твоя доброта очень много значит, и мне захотелось сказать об этом именно так.'],
-  ['Просто так', 'Без особого повода. Просто хочу подарить тебе повод улыбнуться и напомнить, что о тебе думают.'],
-]);
+const LANG_LABELS = Object.freeze({ ru: 'Рус', kk: 'Қаз' });
 
-const PHRASES_KK = Object.freeze([
-  ['Туған күн', 'Туған күніңмен құттықтаймын! Саған зор денсаулық, шексіз бақыт және барлық арманыңның орындалуын тілеймін.'],
-  ['8 наурыз', '8 наурыз мерекесімен құттықтаймын! Өміріңде әрқашан көктемдей шуақ пен қуаныш болсын.'],
-  ['Анаға', 'Анашым, мейірімің мен қамқорлығың үшін рақмет! Әрқашан аман-сау бол.'],
-  ['Рақмет', 'Жасаған жақсылығың үшін шын жүректен рақмет! Өзіңе де сондай жақсылық оралсын.'],
-]);
-
-function phraseChips(phrases, label) {
-  return html`<div class="chips" role="group" aria-label="${label}">
-    ${phrases.map(([name, text]) => html`<button class="chip" type="button" data-text="${text}">${name}</button>`)}
+/** Готовые тексты: язык, повод и три варианта. Выбранный текст попадает в поле, его можно поправить. */
+function textPicker(tierId, today) {
+  const occasions = occasionsForTier(tierId);
+  const current = suggestedOccasion(today);
+  const premium = tierId === 'premium';
+  return html`<div id="text-picker" class="text-picker${premium ? ' is-premium' : ''}" data-lang="ru" data-occ="${current}">
+    <div class="tp-head">
+      <span class="tp-title">${premium ? 'Премиум-тексты' : 'Готовые тексты'}</span>
+      <div class="tp-lang" role="group" aria-label="Язык готовых текстов">
+        ${TEXT_LANGS.map((lang) => html`<button type="button" data-lang="${lang}" aria-pressed="${lang === 'ru' ? 'true' : 'false'}">${LANG_LABELS[lang]}</button>`)}
+      </div>
+    </div>
+    <div class="tp-occasions" role="group" aria-label="Повод">
+      ${occasions.map((occasion) => html`<button class="chip" type="button" data-occ="${occasion.id}" aria-pressed="${occasion.id === current ? 'true' : 'false'}">${TEXT_LANGS.map((lang) => html`<span lang="${lang}" data-l="${lang}">${occasion.name[lang]}</span>`)}</button>`)}
+    </div>
+    ${occasions.flatMap((occasion) =>
+      TEXT_LANGS.map((lang) => html`<div class="tp-variants" data-occ="${occasion.id}" data-lang="${lang}" lang="${lang}" ${occasion.id === current && lang === 'ru' ? '' : 'hidden'}>
+        ${occasion.texts[lang].map((text, index) => html`<button class="variant" type="button" aria-pressed="false">
+          <small>Вариант ${index + 1}</small><span class="variant-text">${text}</span>
+        </button>`)}
+      </div>`),
+    )}
   </div>`;
 }
 
@@ -63,9 +69,9 @@ function songField(songs, card) {
 }
 
 /**
- * @param {{ card: object, template: object, songs: object[], maxPhotos: number }} input
+ * @param {{ card: object, template: object, songs: object[], maxPhotos: number, today?: number }} input
  */
-export function renderForm({ card, template, songs, maxPhotos }) {
+export function renderForm({ card, template, songs, maxPhotos, today = Date.now() }) {
   return documentPage({
     title: `Открытка «${template.name}»`,
     head: html`${brandFonts}<link rel="stylesheet" href="${asset('css/app.css')}"><script src="${asset('js/form.js')}" defer></script>`,
@@ -86,10 +92,13 @@ export function renderForm({ card, template, songs, maxPhotos }) {
           <em class="field-error" data-error="recipient"></em></label>
         <div class="field">
           <label for="message">Текст поздравления</label>
-          ${phraseChips(PHRASES, 'Готовые тексты на русском')}
-          ${phraseChips(PHRASES_KK, 'Готовые тексты на казахском')}
-          <textarea id="message" name="message" rows="6" maxlength="${LIMITS.messageLength}" required placeholder="Напишите свои слова или выберите готовые">${card.message ?? ''}</textarea>
-          <small id="message-count" class="counter" aria-live="polite"></small>
+          <p class="field-hint">Выберите готовый текст или напишите свой. Готовый текст можно изменить.</p>
+          ${textPicker(card.tier, today)}
+          <textarea id="message" name="message" rows="7" maxlength="${LIMITS.messageLength}" required placeholder="Напишите свои слова или выберите готовый текст выше">${card.message ?? ''}</textarea>
+          <div class="message-foot">
+            <button id="message-undo" class="link-btn" type="button" hidden>Вернуть мой текст</button>
+            <small id="message-count" class="counter" aria-live="polite"></small>
+          </div>
           <em class="field-error" data-error="message"></em>
         </div>
         ${photoField(maxPhotos, card)}

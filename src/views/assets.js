@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,4 +24,21 @@ const VERSION = computeVersion();
 /** Адрес статического файла с версией: Cloudflare и браузеры кэшируют файлы, и без неё новое оформление приходит с опозданием. */
 export function asset(path) {
   return `/static/${path}?v=${VERSION}`;
+}
+
+const DESIGN_DIR = STATIC_DIRS[1];
+const inlineCache = new Map();
+
+/**
+ * Текст файла из raiko/assets для вставки прямо в страницу (стили открытки). Так первый экран рисуется
+ * сразу после HTML, без лишнего запроса. Файл перечитывается, только если его поменяли.
+ */
+export function designFileText(path) {
+  const full = join(DESIGN_DIR, path);
+  const { mtimeMs } = statSync(full);
+  const cached = inlineCache.get(full);
+  if (cached?.mtimeMs === mtimeMs) return cached.text;
+  const text = readFileSync(full, 'utf8');
+  inlineCache.set(full, { mtimeMs, text });
+  return text;
 }
