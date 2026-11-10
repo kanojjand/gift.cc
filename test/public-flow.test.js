@@ -269,7 +269,7 @@ test('styles and scripts carry a content version so caches refresh after a relea
   const demo = await (await app.request('/demo/gold')).text();
   assert.match(demo, /\/static\/design\/css\/card-base\.css\?v=[a-f0-9]{10}/);
   assert.match(demo, /\/static\/design\/css\/gold\.css\?v=[a-f0-9]{10}/);
-  assert.match(demo, /js\/card\.js\?v=[a-f0-9]{10}/);
+  assert.match(demo, /\/static\/design\/js\/card\.js\?v=[a-f0-9]{10}/);
   assert.match(await (await app.request(`/c/${issueCard(repo)}?template=envelope`)).text(), /js\/form\.js\?v=[a-f0-9]{10}/);
 });
 
@@ -280,6 +280,7 @@ test('template styles and demo photos are served from the designer folder', asyn
   assert.match(css.headers.get('cache-control'), /max-age=/);
   assert.equal((await app.request('/static/design/css/card-base.css')).status, 200);
   assert.equal((await app.request('/static/design/demo/1.svg')).status, 200);
+  assert.equal((await app.request('/static/design/js/card.js')).status, 200);
   assert.equal((await app.request('/static/design/../templates.js')).status, 404);
   assert.match(await (await app.request('/demo/gold')).text(), /\/static\/design\/demo\/1\.svg/);
 });

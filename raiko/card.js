@@ -1,9 +1,9 @@
-import { BRAND, whatsappLink } from '../brand.js';
-import { closingLine, renderBackdrop, renderSceneDecor } from '../../raiko/decor.js';
-import { renderDivider, renderGate } from '../../raiko/gates.js';
-import { asset } from './assets.js';
-import { html, raw } from './html.js';
-import { brandMark, contactLinks, documentPage } from './pages.js';
+import { BRAND, whatsappLink } from '../src/brand.js';
+import { closingLine, renderBackdrop, renderSceneDecor } from './decor.js';
+import { renderDivider, renderGate } from './gates.js';
+import { asset } from '../src/views/assets.js';
+import { html, raw } from '../src/views/html.js';
+import { brandMark, contactLinks, documentPage } from '../src/views/pages.js';
 
 const LONG_MESSAGE_CHARS = 280;
 const LONG_NAME_CHARS = 10;
@@ -85,7 +85,7 @@ function headLinks(template) {
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?${template.fonts}&display=swap">
     <link rel="stylesheet" href="${asset('design/css/card-base.css')}">
     <link rel="stylesheet" href="${asset(`design/css/${template.id}.css`)}">
-    <script src="${asset('js/card.js')}" defer></script>`;
+    <script src="${asset('design/js/card.js')}" defer></script>`;
 }
 
 /**

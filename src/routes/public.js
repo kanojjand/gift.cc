@@ -6,7 +6,7 @@ import { serveFile } from '../serve-file.js';
 import { sweep } from '../sweep.js';
 import { getTemplate, getTier, isTemplateAllowed, MAX_PHOTOS_ANY, templatesForTier } from '../tiers.js';
 import { isJpeg, isValidCode, isValidPhotoName, isValidSongFile, validateGreeting } from '../validation.js';
-import { renderCard } from '../views/card.js';
+import { renderCard } from '../../raiko/card.js';
 import { renderCatalog } from '../views/catalog.js';
 import { renderForm } from '../views/form.js';
 import { goneInfo, landingPage } from '../views/pages.js';
