@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DESIGNS } from '../raiko/templates.js';
 
-const BASIC_PHOTOS = 1;
+const BASIC_PHOTOS = 3;
 const PREMIUM_PHOTOS = 5;
 const FX = new Set(['none', 'petals', 'stars', 'gold']);
 const ID_PATTERN = /^[a-z0-9-]+$/;

@@ -93,7 +93,7 @@ export function publicRoutes({ repo, storage, now, config }) {
     );
 
   const showForm = (c, card, template) =>
-    c.html(renderForm({ card, template, songs: repo.listSongs(template.id), maxPhotos: getTier(card.tier).maxPhotos }).value);
+    c.html(renderForm({ card, template, songs: repo.listSongs(template.id), maxPhotos: getTier(card.tier).maxPhotos, today: now() }).value);
 
   routes.get('/', (c) => c.html(landingPage().value));
 

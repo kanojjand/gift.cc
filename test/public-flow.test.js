@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { sweep } from '../src/sweep.js';
+import { occasionProblems, occasionsForTier, suggestedOccasion } from '../src/texts.js';
 import { designProblems, getTemplate } from '../src/tiers.js';
 import { greetingForm, issueCard, JPEG, makeContext, postForm } from './helpers.js';
 
@@ -137,12 +138,13 @@ test('activation needs a draft, then locks the card for one week', async (t) => 
   assert.ok(!body.includes('id="greeting-form"'));
 });
 
-test('basic template accepts one photo, premium accepts five', async (t) => {
+test('basic template accepts three photos, premium accepts five', async (t) => {
   const { app, repo } = makeContext(t);
   const basic = issueCard(repo, 'envelope', 'bascccde2345');
   const premium = issueCard(repo, 'gold', 'premcde23456');
-  assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, [JPEG, JPEG]))).status, 400);
-  assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, [JPEG]))).status, 200);
+  assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, Array(4).fill(JPEG)))).status, 400);
+  assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, Array(3).fill(JPEG)))).status, 200);
+  assert.equal(repo.getCard(basic).photos.length, 3);
   assert.equal((await postForm(app, `/c/${premium}`, greetingForm({}, Array(6).fill(JPEG)))).status, 400);
   assert.equal((await postForm(app, `/c/${premium}`, greetingForm({}, Array(5).fill(JPEG)))).status, 200);
   assert.equal(repo.getCard(premium).photos.length, 5);
@@ -264,11 +266,20 @@ test('every template ends with a next button leading to the logo and contacts', 
   }
 });
 
+test('card styles are inlined and fonts do not hold back the first screen', async (t) => {
+  const { app } = makeContext(t);
+  const demo = await (await app.request('/demo/gold')).text();
+  const style = /<style>([\s\S]*?)<\/style>/.exec(demo)?.[1] ?? '';
+  assert.ok(style.includes(readFileSync(new URL('../raiko/assets/css/card-base.css', import.meta.url), 'utf8')));
+  assert.ok(style.includes(readFileSync(new URL('../raiko/assets/css/gold.css', import.meta.url), 'utf8')));
+  assert.doesNotMatch(demo, /<link rel="stylesheet" href="\/static\/design\/css/);
+  assert.match(demo, /<link id="card-fonts" rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+" media="print">/);
+  assert.match(demo, /class="card t-gold fonts-wait"/);
+});
+
 test('styles and scripts carry a content version so caches refresh after a release', async (t) => {
   const { app, repo } = makeContext(t);
   const demo = await (await app.request('/demo/gold')).text();
-  assert.match(demo, /\/static\/design\/css\/card-base\.css\?v=[a-f0-9]{10}/);
-  assert.match(demo, /\/static\/design\/css\/gold\.css\?v=[a-f0-9]{10}/);
   assert.match(demo, /\/static\/design\/js\/card\.js\?v=[a-f0-9]{10}/);
   assert.match(await (await app.request(`/c/${issueCard(repo)}?template=envelope`)).text(), /js\/form\.js\?v=[a-f0-9]{10}/);
 });
@@ -332,4 +343,54 @@ test('demo pages exist for all ten templates and pages are not indexed', async (
     assert.match(res.headers.get('x-robots-tag'), /noindex/);
     assert.match(await res.text(), /cclab\.kz/, id);
   }
+});
+
+test('form offers ready texts per occasion in two languages, premium gets its own set', async (t) => {
+  const { app, repo } = makeContext(t);
+  const basicForm = await (await app.request(`/c/${issueCard(repo, 'envelope', 'bascccde2345')}?template=envelope`)).text();
+  const premiumForm = await (await app.request(`/c/${issueCard(repo, 'gold', 'premcde23456')}?template=gold`)).text();
+  const [basicBirthday] = occasionsForTier('basic')[0].texts.ru;
+  const [premiumBirthday] = occasionsForTier('premium')[0].texts.ru;
+  const escape = (text) => text.replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+  assert.ok(basicForm.includes(escape(basicBirthday)));
+  assert.ok(!basicForm.includes(escape(premiumBirthday)));
+  assert.ok(premiumForm.includes(escape(premiumBirthday)));
+  assert.ok(premiumForm.includes('Премиум-тексты'));
+  for (const occasion of occasionsForTier('basic')) {
+    assert.match(basicForm, new RegExp(`class="tp-variants" data-occ="${occasion.id}" data-lang="ru"`));
+    assert.match(basicForm, new RegExp(`class="tp-variants" data-occ="${occasion.id}" data-lang="kk"`));
+  }
+  assert.match(basicForm, /<textarea id="message"/);
+  assert.match(basicForm, /id="message-undo"/);
+});
+
+test('every occasion has three variants per language and fits the message limit', () => {
+  for (const tier of ['basic', 'premium']) {
+    for (const occasion of occasionsForTier(tier)) {
+      assert.equal(occasion.texts.ru.length, 3, `${tier} ${occasion.id} ru`);
+      assert.equal(occasion.texts.kk.length, 3, `${tier} ${occasion.id} kk`);
+    }
+  }
+  assert.deepEqual(occasionProblems({ ...occasionsForTier('basic')[0], basic: { ru: ['a'], kk: ['b'] }, premium: { ru: ['c'], kk: ['d'] } }), []);
+  const problems = occasionProblems({ id: 'Bad id', name: { ru: 'x' }, season: ['13-01'], basic: { ru: ['x'.repeat(1001)], kk: [] } });
+  assert.ok(problems.some((p) => p.includes('латиница')));
+  assert.ok(problems.some((p) => p.includes('name')));
+  assert.ok(problems.some((p) => p.includes('season')));
+  assert.ok(problems.some((p) => p.includes('длиннее')));
+  assert.ok(problems.some((p) => p.includes('нет текстов')));
+});
+
+test('the nearest holiday is preselected in the form', () => {
+  assert.equal(suggestedOccasion(Date.UTC(2026, 2, 5)), 'march-8');
+  assert.equal(suggestedOccasion(Date.UTC(2026, 2, 20)), 'nauryz');
+  assert.equal(suggestedOccasion(Date.UTC(2026, 11, 30)), 'new-year');
+  assert.equal(suggestedOccasion(Date.UTC(2027, 0, 3)), 'new-year');
+  assert.equal(suggestedOccasion(Date.UTC(2026, 10, 9)), 'birthday');
+});
+
+test('landing page shows photo limits for both tiers', async (t) => {
+  const { app } = makeContext(t);
+  const body = await (await app.request('/')).text();
+  assert.match(body, /Базовые шаблоны, до 3 фото/);
+  assert.match(body, /Премиум, до 5 фото/);
 });

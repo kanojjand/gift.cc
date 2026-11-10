@@ -99,12 +99,65 @@
     updateAddTile();
   });
 
-  form.querySelectorAll('.chip').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      form.elements.message.value = chip.dataset.text;
-      form.elements.message.dispatchEvent(new Event('input', { bubbles: true }));
-      form.elements.message.focus();
+  /* Готовые тексты: язык, повод, вариант. Свой текст не теряется: его можно вернуть одной кнопкой. */
+  const picker = document.getElementById('text-picker');
+  const message = form.elements.message;
+  const undoButton = document.getElementById('message-undo');
+  const readyTexts = new Set([...picker.querySelectorAll('.variant-text')].map((node) => node.textContent));
+  let ownText = null;
+
+  const visibleVariants = () => [...picker.querySelectorAll('.tp-variants:not([hidden]) .variant')];
+  const textOf = (variant) => variant.querySelector('.variant-text').textContent;
+
+  function markSelected() {
+    visibleVariants().forEach((variant) => variant.setAttribute('aria-pressed', String(textOf(variant) === message.value)));
+  }
+
+  function showGroup() {
+    const { lang, occ } = picker.dataset;
+    picker.querySelectorAll('.tp-variants').forEach((group) => {
+      group.hidden = group.dataset.lang !== lang || group.dataset.occ !== occ;
     });
+    picker.querySelectorAll('.tp-lang button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.lang === lang)));
+    picker.querySelectorAll('.tp-occasions .chip').forEach((chip) => chip.setAttribute('aria-pressed', String(chip.dataset.occ === occ)));
+    markSelected();
+  }
+
+  picker.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    if (button.dataset.lang) picker.dataset.lang = button.dataset.lang;
+    else if (button.dataset.occ) {
+      picker.dataset.occ = button.dataset.occ;
+      button.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    } else if (button.classList.contains('variant')) {
+      if (message.value.trim() && !readyTexts.has(message.value)) {
+        ownText = message.value;
+        undoButton.hidden = false;
+      }
+      message.value = textOf(button);
+      message.dispatchEvent(new Event('input', { bubbles: true }));
+      message.classList.remove('flash');
+      void message.offsetWidth;
+      message.classList.add('flash');
+    }
+    showGroup();
+  });
+
+  undoButton.addEventListener('click', () => {
+    message.value = ownText ?? '';
+    ownText = null;
+    undoButton.hidden = true;
+    message.dispatchEvent(new Event('input', { bubbles: true }));
+    markSelected();
+  });
+
+  message.addEventListener('input', (event) => {
+    if (event.isTrusted) {
+      ownText = null;
+      undoButton.hidden = true;
+    }
+    markSelected();
   });
 
   const preview = new Audio();
@@ -226,4 +279,5 @@
 
   updateCounter();
   updateAddTile();
+  showGroup();
 })();
