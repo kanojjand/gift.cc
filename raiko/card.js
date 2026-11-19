@@ -39,29 +39,29 @@ const SONG_LABEL = 'Эта песня — для тебя';
 const PLAYER_PERMISSIONS = 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write';
 
 /**
- * Песня, которую выбрал отправитель, в официальном плеере сервиса. Плеер нельзя прятать: человек сам жмёт ▶,
- * и музыка играет, пока он листает дальше. В демо на этом месте заглушка.
+ * Песня, которую выбрал отправитель, в официальном плеере сервиса. Стоит сразу под именем: когда песня стартует,
+ * плеер должен быть на виду (так требует YouTube). Плеер грузится по касанию первого экрана, YouTube включается сам.
+ * Если браузер не дал включить звук (iPhone разрешает его только после нажатия на сам плеер), появляется подсказка.
+ * Spotify, Apple Music и Яндекс управлять собой не дают: там человек жмёт ▶ сам. В демо на этом месте заглушка.
  * Подпись над плеером можно задать шаблону в labels.song.
  */
-function songScene(template, music, mode) {
+function helloSong(template, music, mode) {
   if (!music && mode !== 'demo') return '';
-  return html`<section class="scene scene-song">
-    <div class="panel">
-      <p class="eyebrow reveal">${template.labels.song ?? SONG_LABEL}</p>
-      ${music ? songPlayer(music) : songPlaceholder()}
-      ${music ? html`<p class="song-hint reveal">Нажми ▶ и листай дальше — песня будет играть</p>` : ''}
-    </div>
-  </section>`;
+  return html`<div class="hello-song reveal">
+    <p class="song-label">${template.labels.song ?? SONG_LABEL}</p>
+    ${music ? songPlayer(music) : songPlaceholder()}
+    ${music ? html`<p class="song-hint" ${music.controlSrc ? 'hidden' : ''}>Нажми ▶ — песня будет играть, пока листаешь</p>` : ''}
+  </div>`;
 }
 
 function songPlayer(music) {
-  return html`<div class="song-player reveal" data-service="${music.service}" style="${music.height ? `--player-h:${music.height}px` : ''}">
-    <iframe src="${music.src}" title="Песня в открытке, ${music.name}" loading="lazy" allow="${PLAYER_PERMISSIONS}" referrerpolicy="strict-origin"></iframe>
+  return html`<div class="song-player" data-service="${music.service}" style="${music.height ? `--player-h:${music.height}px` : ''}">
+    <iframe data-src="${music.controlSrc ?? music.src}" ${music.controlSrc ? html`data-autoplay="${music.service}"` : ''} title="Песня в открытке, ${music.name}" allow="${PLAYER_PERMISSIONS}" referrerpolicy="strict-origin"></iframe>
   </div>`;
 }
 
 function songPlaceholder() {
-  return html`<div class="song-player song-demo reveal">
+  return html`<div class="song-player song-demo">
     <span class="song-demo-note" aria-hidden="true">♪</span>
     <b>Здесь будет ваша песня</b>
     <small>Ссылка из YouTube, Spotify, Apple Music или Яндекс Музыки</small>
@@ -187,10 +187,10 @@ export function renderCard({ template, palette = null, music = null, sender, rec
             <p class="eyebrow reveal">${template.labels.eyebrow}</p>
             <h1 class="recipient reveal ${[...recipient].length > LONG_NAME_CHARS ? 'name-long' : ''}">${recipient}</h1>
             <div class="reveal">${renderDivider(template.id)}</div>
+            ${helloSong(template, music, mode)}
           </div>
           <p class="scroll-hint reveal">Листай вниз</p>
         </section>
-        ${songScene(template, music, mode)}
         <section class="scene scene-message">
           <div class="panel">
             ${renderSceneDecor(template.id, 'message', decorData)}

@@ -316,8 +316,9 @@
   function musicStatusText(text, music, errorText) {
     if (!text) return '';
     if (!music) return errorText;
-    if (music.canStart) return `✓ ${music.name}: песня сыграет целиком. Ниже можно выбрать, с какого момента она начнётся.`;
-    return `✓ ${music.name}. Без подписки у получателя обычно играет только отрывок около 30 секунд, и момент выбрать нельзя. Целиком и с нужного места песня играет из YouTube.`;
+    if (music.fullTrack) return `✓ ${music.name}: песня включится сама, как только откроют открытку, и сыграет целиком. Ниже можно выбрать момент.`;
+    const how = music.autoplay ? 'включится сама' : 'включится, когда получатель нажмёт ▶';
+    return `✓ ${music.name}: ${how}, но без подписки сыграет только отрывок около 30 секунд, и момент выбрать нельзя. Чтобы песня включалась сама и играла целиком с нужного места, возьмите ссылку из YouTube.`;
   }
 
   const startInputs = () => ['musicStartMin', 'musicStartSec'].map((name) => form.elements[name]);

@@ -13,8 +13,9 @@ test('a song link from the form is saved clean and the card shows the official p
   assert.equal(repo.getCard(code).musicLink, SAVED_LINK);
 
   const body = await (await app.request(`/c/${code}`)).text();
-  assert.match(body, /class="scene scene-song"/);
-  assert.match(body, new RegExp(`<iframe src="https://www.youtube-nocookie.com/embed/${YT_ID}\\?rel=0&amp;playsinline=1"`));
+  assert.match(body, /<div class="hello-song /);
+  assert.match(body, new RegExp(`<iframe data-src="https://www.youtube-nocookie.com/embed/${YT_ID}\\?rel=0&amp;playsinline=1&amp;enablejsapi=1" data-autoplay="youtube"`));
+  assert.doesNotMatch(body, /<iframe src=/, 'the player loads only when the first screen is touched');
   assert.match(body, /referrerpolicy="strict-origin"/);
   assert.doesNotMatch(body, /class="bg-music"/);
 });
@@ -34,7 +35,7 @@ test('without a link the card has no song screen', async (t) => {
   const code = issueCard(repo, 'newyear');
   assert.equal((await postForm(app, `/c/${code}`, greetingForm({ musicLink: '  ' }))).status, 200);
   assert.equal(repo.getCard(code).musicLink, null);
-  assert.doesNotMatch(await (await app.request(`/c/${code}`)).text(), /class="scene scene-song"/);
+  assert.doesNotMatch(await (await app.request(`/c/${code}`)).text(), /<div class="hello-song /);
 });
 
 test('the song link wins over a template melody, so two songs never play at once', async (t) => {
@@ -51,7 +52,7 @@ test('the song link wins over a template melody, so two songs never play at once
 test('the demo shows where the buyer’s song will be', async (t) => {
   const { app } = makeContext(t);
   const body = await (await app.request('/demo/birthday')).text();
-  assert.match(body, /class="scene scene-song"/);
+  assert.match(body, /<div class="hello-song /);
   assert.match(body, /Здесь будет ваша песня/);
   assert.doesNotMatch(body, /<iframe/);
 });
@@ -89,7 +90,7 @@ test('the buyer picks the moment a YouTube song starts from', async (t) => {
   const res = await postForm(app, `/c/${code}`, greetingForm({ musicLink: `https://youtu.be/${YT_ID}`, musicStartMin: '1', musicStartSec: '05' }));
   assert.equal(res.status, 200);
   assert.equal(repo.getCard(code).musicLink, `${SAVED_LINK}&t=65`);
-  assert.match(await (await app.request(`/c/${code}`)).text(), /playsinline=1&amp;start=65"/);
+  assert.match(await (await app.request(`/c/${code}`)).text(), /playsinline=1&amp;start=65&amp;enablejsapi=1"/);
   const form = await (await app.request(`/c/${code}?edit=1`)).text();
   assert.match(form, /name="musicStartMin"[^>]*value="1"/);
   assert.match(form, /name="musicStartSec"[^>]*value="05"/);
@@ -114,4 +115,19 @@ test('a moment typed for a service that cannot start mid-song is ignored', async
   const spotify = 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT';
   assert.equal((await postForm(app, `/c/${code}`, greetingForm({ musicLink: spotify, musicStartMin: '1', musicStartSec: '05' }))).status, 200);
   assert.equal(repo.getCard(code).musicLink, spotify);
+});
+
+test('players that cannot be started by the page ask the recipient to press play right away', async (t) => {
+  const { app, repo } = makeContext(t);
+  const code = issueCard(repo, 'newyear');
+  await postForm(app, `/c/${code}`, greetingForm({ musicLink: 'https://music.apple.com/kz/album/x/1440857781?i=1440858007' }));
+  const body = await (await app.request(`/c/${code}`)).text();
+  assert.match(body, /<iframe data-src="https:\/\/embed\.music\.apple\.com\/kz\/album\/1440857781\?i=1440858007"\s+title=/);
+  assert.doesNotMatch(body, /class="song-hint" hidden/);
+
+  const spotifyCode = issueCard(repo, 'newyear', 'sptfycde2345');
+  await postForm(app, `/c/${spotifyCode}`, greetingForm({ musicLink: 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT' }));
+  const spotifyBody = await (await app.request(`/c/${spotifyCode}`)).text();
+  assert.match(spotifyBody, /data-autoplay="spotify"/);
+  assert.match(spotifyBody, /class="song-hint" hidden/);
 });

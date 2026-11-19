@@ -70,8 +70,9 @@ img { display: block; max-width: 100%; }
 .photos img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .swipe-hint { margin: 18px 0 0; font-size: 16px; opacity: .65; }
 
-/* Экран песни: официальный плеер сервиса в рамке цвета шаблона. Высоту плеера задаёт переменная --player-h. */
-.scene-song .eyebrow { margin-bottom: 18px; }
+/* Песня под именем: официальный плеер сервиса в рамке цвета шаблона. Высоту плеера задаёт переменная --player-h. */
+.hello-song { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 4px; }
+.song-label { margin: 0 0 12px; font-size: 16px; opacity: .8; }
 .song-player {
   position: relative; width: 100%; max-width: 440px; border-radius: 18px; overflow: hidden;
   background: rgba(255, 255, 255, .06); background: color-mix(in srgb, var(--ink, #fff) 8%, transparent);
@@ -80,7 +81,7 @@ img { display: block; max-width: 100%; }
 }
 .song-player iframe { display: block; width: 100%; height: var(--player-h, 180px); border: 0; }
 .song-player[data-service="youtube"] iframe { height: auto; aspect-ratio: 16 / 9; min-height: 200px; }
-.song-hint { margin: 18px 0 0; font-size: 16px; opacity: .7; }
+.song-hint { margin: 14px 0 0; font-size: 15px; opacity: .75; }
 .song-demo {
   display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 22px; box-shadow: none;
   border: 1.5px dashed currentColor; border-color: color-mix(in srgb, var(--accent, currentColor) 60%, transparent);

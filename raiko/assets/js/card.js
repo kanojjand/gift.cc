@@ -300,6 +300,97 @@
     figures.forEach((figure) => observer.observe(figure));
   }
 
+  /* Песня по ссылке. Плеер грузится по касанию первого экрана, а YouTube и Spotify включаются сами, когда открытка
+     раскрылась и плеер хотя бы наполовину на виду (так требует YouTube). Управляем плеерами сообщениями, как их
+     официальные скрипты, но без загрузки этих скриптов. Если песня не заиграла (iPhone даёт звук только после
+     нажатия на сам плеер), показываем подсказку «Нажми ▶». Apple Music и Яндекс управлять собой не дают:
+     там подсказка видна сразу. */
+  const SONG_START_WAIT_MS = 5000;
+  const SONG_HANDSHAKE_MS = 250;
+  const SONG_HANDSHAKE_TRIES = 60;
+  const SONG_VISIBLE_SHARE = 0.5;
+  const YOUTUBE_PLAYING = 1;
+  const songFrame = card.querySelector('.song-player iframe[data-src]');
+  const songHint = card.querySelector('.song-hint');
+
+  const youtubeMessage = (message) => JSON.stringify({ ...message, id: 1, channel: 'widget' });
+  const PLAYER_PROTOCOLS = {
+    youtube: {
+      handshake: youtubeMessage({ event: 'listening' }),
+      isReady: () => true,
+      playCommand: youtubeMessage({ event: 'command', func: 'playVideo', args: [] }),
+      isPlaying: (data) => (data.event === 'onStateChange' ? data.info : data.info?.playerState) === YOUTUBE_PLAYING,
+    },
+    spotify: {
+      handshake: null,
+      isReady: (data) => data.type === 'ready',
+      playCommand: { command: 'toggle' },
+      isPlaying: (data) => data.type === 'playback_started' || (data.type === 'playback_update' && data.payload?.isPaused === false && !data.payload.isBuffering),
+    },
+  };
+
+  function readPlayerMessage(data) {
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch {
+      return null;
+    }
+  }
+
+  function whenMostlyVisible(element, callback) {
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.intersectionRatio >= SONG_VISIBLE_SHARE)) return;
+      observer.disconnect();
+      callback();
+    }, { threshold: SONG_VISIBLE_SHARE });
+    observer.observe(element);
+  }
+
+  function playerControl(frame, protocol) {
+    const target = new URL(frame.dataset.src).origin;
+    const send = (message) => frame.contentWindow?.postMessage(message, target);
+    const state = { ready: false, playing: false, wanted: false, tries: 0 };
+    if (protocol.handshake) {
+      const handshake = setInterval(() => {
+        state.tries += 1;
+        if (state.ready || state.tries > SONG_HANDSHAKE_TRIES) clearInterval(handshake);
+        else send(protocol.handshake);
+      }, SONG_HANDSHAKE_MS);
+    }
+    window.addEventListener('message', (event) => {
+      if (event.origin !== target || event.source !== frame.contentWindow) return;
+      const data = readPlayerMessage(event.data);
+      if (!data) return;
+      if (!state.ready && protocol.isReady(data)) {
+        state.ready = true;
+        if (state.wanted) send(protocol.playCommand);
+      }
+      if (!state.playing && protocol.isPlaying(data)) {
+        state.playing = true;
+        songHint.hidden = true;
+      }
+    });
+    return {
+      play() {
+        state.wanted = true;
+        if (state.ready) send(protocol.playCommand);
+        setTimeout(() => {
+          if (!state.playing) songHint.hidden = false;
+        }, SONG_START_WAIT_MS);
+      },
+    };
+  }
+
+  function loadSong() {
+    if (!songFrame) return null;
+    const protocol = PLAYER_PROTOCOLS[songFrame.dataset.autoplay];
+    const origin = songFrame.dataset.autoplay === 'youtube' ? `&origin=${encodeURIComponent(location.origin)}` : '';
+    songFrame.src = `${songFrame.dataset.src}${origin}`;
+    if (!protocol) return null;
+    const control = playerControl(songFrame, protocol);
+    return { play: () => whenMostlyVisible(songFrame, control.play) };
+  }
+
   function open() {
     if (opened) return;
     opened = true;
@@ -308,6 +399,7 @@
     if (card.dataset.track === '1') navigator.sendBeacon(`/c/${card.dataset.code}/opened`);
     loadBrandFonts();
     startMusic();
+    const song = loadSong();
     effects = startEffects();
     const burstDelay = BURST_DELAY_MS[card.dataset.fx];
     if (effects && burstDelay !== undefined) setTimeout(() => burstFrom(card.querySelector('.gate-btn')), burstDelay);
@@ -315,6 +407,7 @@
     setTimeout(() => {
       card.classList.add('opened');
       document.body.classList.remove('locked');
+      song?.play();
     }, reduceMotion ? 0 : Number(card.dataset.openMs));
   }
 

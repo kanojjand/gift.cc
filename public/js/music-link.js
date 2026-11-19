@@ -40,11 +40,14 @@ const EDGE_PUNCTUATION = /^[("'«“[]+|[)"'»”\].,!?;:]+$/g;
 const OTHER_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
 const SERVICE_INFO = Object.freeze({
-  youtube: { name: 'YouTube', fullTrack: true, canStart: true },
-  spotify: { name: 'Spotify', fullTrack: false, canStart: false },
-  apple: { name: 'Apple Music', fullTrack: false, canStart: false },
-  yandex: { name: 'Яндекс Музыка', fullTrack: false, canStart: false },
+  youtube: { name: 'YouTube', fullTrack: true, canStart: true, autoplay: true },
+  spotify: { name: 'Spotify', fullTrack: false, canStart: false, autoplay: true },
+  apple: { name: 'Apple Music', fullTrack: false, canStart: false, autoplay: false },
+  yandex: { name: 'Яндекс Музыка', fullTrack: false, canStart: false, autoplay: false },
 });
+
+/** Что добавить к адресу плеера, чтобы страница могла его запустить. YouTube слушает команды только с enablejsapi=1. */
+const CONTROL_SUFFIX = Object.freeze({ youtube: '&enablejsapi=1', spotify: '' });
 
 /** Высота плеера в пикселях; 0 — по пропорции видео 16:9. */
 const PLAYER_HEIGHT = Object.freeze({ spotifyTrack: 152, spotifyList: 352, appleSong: 175, appleList: 450, yandex: 180 });
@@ -181,8 +184,11 @@ function player(music) {
 /**
  * Что вставить в страницу: адрес официального плеера, его высота и играет ли он песню целиком у любого слушателя.
  * Spotify, Apple Music и Яндекс без входа в аккаунт обычно дают только отрывок.
+ * controlSrc — адрес плеера, которым страница может управлять (запустить песню сама): у YouTube и Spotify.
  */
 export function musicEmbed(music) {
   if (!music) return null;
-  return { service: music.service, ...SERVICE_INFO[music.service], ...player(music) };
+  const info = SERVICE_INFO[music.service];
+  const { src, height } = player(music);
+  return { service: music.service, ...info, src, height, controlSrc: info.autoplay ? `${src}${CONTROL_SUFFIX[music.service]}` : null };
 }

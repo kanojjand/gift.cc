@@ -94,6 +94,8 @@ test('builds the official player address from the parsed ids only', () => {
     name: 'YouTube',
     fullTrack: true,
     canStart: true,
+    autoplay: true,
+    controlSrc: `https://www.youtube-nocookie.com/embed/${YT_ID}?rel=0&playsinline=1&start=42&enablejsapi=1`,
     src: `https://www.youtube-nocookie.com/embed/${YT_ID}?rel=0&playsinline=1&start=42`,
     height: 0,
   });
@@ -101,6 +103,11 @@ test('builds the official player address from the parsed ids only', () => {
   assert.equal(spotify.src, `https://open.spotify.com/embed/track/${SPOTIFY_ID}`);
   assert.equal(spotify.height, 152);
   assert.equal(spotify.fullTrack, false);
+  assert.equal(spotify.autoplay, true);
+  assert.equal(spotify.controlSrc, spotify.src);
+  const apple = musicEmbed(parseMusicLink('https://music.apple.com/kz/album/x/1440857781?i=1440858007'));
+  assert.equal(apple.autoplay, false);
+  assert.equal(apple.controlSrc, null);
   assert.equal(musicEmbed(parseMusicLink(`https://open.spotify.com/playlist/${SPOTIFY_ID}`)).height, 352);
   assert.equal(musicEmbed(parseMusicLink('https://music.apple.com/kz/album/x/1440857781?i=1440858007')).src, 'https://embed.music.apple.com/kz/album/1440857781?i=1440858007');
   assert.equal(musicEmbed(parseMusicLink('https://music.apple.com/us/song/x/1440858007')).src, 'https://embed.music.apple.com/us/song/1440858007');
