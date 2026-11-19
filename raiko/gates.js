@@ -1,4 +1,5 @@
 import { html, raw } from '../src/views/html.js';
+import { getTheme } from './themes/index.js';
 
 const hint = (text) => html`<p class="gate-hint">${text}</p>`;
 
@@ -143,9 +144,9 @@ const DIVIDERS = {
 };
 
 export function renderGate(templateId, data) {
-  return GATES[templateId](data);
+  return getTheme(templateId)?.gate(data) ?? GATES[templateId](data);
 }
 
 export function renderDivider(templateId) {
-  return DIVIDERS[templateId] ?? html`<span class="divider" aria-hidden="true"></span>`;
+  return getTheme(templateId)?.divider?.() ?? DIVIDERS[templateId] ?? html`<span class="divider" aria-hidden="true"></span>`;
 }

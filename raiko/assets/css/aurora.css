@@ -1,0 +1,74 @@
+/* «Сияние»: северное сияние и жемчужина света. Палитра: --accent, --accent2, --accent3 — три цвета сияния. */
+:root {
+  --font-head: 'Ysabeau', system-ui, sans-serif;
+  --font-body: 'Onest', system-ui, sans-serif;
+  --word-fx: wordGlow;
+  --fx-color: var(--ink);
+  --orb: radial-gradient(circle at 34% 30%, #fff 0 8%, color-mix(in srgb, var(--accent3) 60%, #fff) 22%, var(--accent) 52%, var(--accent2) 82%);
+}
+
+/* ---------- Фон: ленты сияния над горами ---------- */
+.t-aurora .backdrop { background: radial-gradient(120% 70% at 50% 110%, var(--bg2), var(--bg) 62%); }
+.ribbon { position: absolute; left: -40vw; width: 180vw; height: 46vh; border-radius: 50%; filter: blur(46px); mix-blend-mode: screen; opacity: .55; animation: au-ribbon 18s ease-in-out infinite alternate; }
+.ribbon.rb1 { top: 0; background: linear-gradient(90deg, transparent 10%, var(--accent) 40%, var(--accent3) 60%, transparent 90%); }
+.ribbon.rb2 { top: 18vh; background: linear-gradient(90deg, transparent 15%, var(--accent2) 45%, var(--accent) 70%, transparent 92%); opacity: .45; animation-duration: 23s; animation-delay: -7s; }
+.ribbon.rb3 { top: 36vh; height: 30vh; background: linear-gradient(90deg, transparent, var(--accent3), transparent); opacity: .28; animation-duration: 27s; animation-delay: -13s; }
+@keyframes au-ribbon { 0% { transform: translateX(-6vw) rotate(-12deg) scaleY(.8); } 100% { transform: translateX(8vw) rotate(-3deg) scaleY(1.25); } }
+.au-horizon { position: absolute; left: 0; bottom: 0; width: 100%; height: 18vh; }
+.au-horizon .far { fill: color-mix(in srgb, var(--bg2) 65%, #000); }
+.au-horizon .near { fill: var(--bg); }
+
+/* ---------- Первый экран: жемчужина ---------- */
+.t-aurora .gate { gap: 10px; background: radial-gradient(60% 40% at 50% 56%, color-mix(in srgb, var(--accent2) 20%, var(--bg)), var(--bg) 72%); }
+.t-aurora .gate::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .8; animation: au-stars 4s ease-in-out infinite alternate;
+  background-image:
+    radial-gradient(1.4px 1.4px at 10% 12%, var(--ink) 50%, transparent 52%), radial-gradient(1px 1px at 24% 30%, var(--ink) 50%, transparent 52%),
+    radial-gradient(1.6px 1.6px at 82% 14%, var(--accent) 50%, transparent 52%), radial-gradient(1px 1px at 66% 26%, var(--ink) 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 90% 40%, var(--ink) 50%, transparent 52%), radial-gradient(1.5px 1.5px at 6% 58%, var(--accent3) 50%, transparent 52%),
+    radial-gradient(1px 1px at 16% 82%, var(--ink) 50%, transparent 52%), radial-gradient(1.3px 1.3px at 74% 76%, var(--ink) 50%, transparent 52%),
+    radial-gradient(1px 1px at 46% 8%, var(--ink) 50%, transparent 52%), radial-gradient(1.4px 1.4px at 92% 88%, var(--accent) 50%, transparent 52%); }
+@keyframes au-stars { to { opacity: .35; } }
+.au-kicker { position: relative; z-index: 2; margin: 0; font: 500 11px/1 var(--font-body); letter-spacing: .42em; text-transform: uppercase; color: var(--accent); }
+.t-aurora .gate-title { margin: 4px 0 0; font-family: var(--font-head); font-weight: 200; font-size: clamp(42px, 12.5vw, 66px); letter-spacing: .03em; color: var(--ink); }
+.pearl { position: relative; z-index: 3; display: grid; place-items: center; width: 170px; height: 170px; margin: 24px 0; -webkit-tap-highlight-color: transparent; }
+.pearl .orb { position: relative; width: 100px; height: 100px; border-radius: 50%; overflow: hidden; background: var(--orb);
+  box-shadow: 0 0 40px 6px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 120px 34px color-mix(in srgb, var(--accent2) 34%, transparent), inset -10px -14px 24px rgba(0, 0, 0, .22);
+  animation: au-pulse 3s ease-in-out infinite; }
+.pearl .orb::after { content: ''; position: absolute; inset: -30%; background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, .45), transparent 30%, color-mix(in srgb, var(--accent3) 50%, transparent), transparent 60%); mix-blend-mode: overlay; animation: au-spin 6s linear infinite; }
+@keyframes au-pulse { 50% { transform: scale(1.07); } }
+@keyframes au-spin { to { transform: rotate(360deg); } }
+.pearl .ring { position: absolute; inset: 0; border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent); border-radius: 50%; opacity: 0; animation: au-ring 3s ease-out infinite; }
+.pearl .r2 { animation-delay: 1s; }
+.pearl .r3 { animation-delay: 2s; }
+@keyframes au-ring { 0% { transform: scale(.55); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+.t-aurora .gate-hint { font: 400 12px/1.4 var(--font-body); letter-spacing: .3em; text-transform: uppercase; opacity: .65; }
+
+/* Открытие: жемчужина вспыхивает и заливает экран светом. */
+.card.opening .pearl .orb { animation: au-burst 1.5s cubic-bezier(.7, 0, .2, 1) forwards; }
+@keyframes au-burst { 25% { transform: scale(.82); } 100% { transform: scale(24); opacity: 0; } }
+.card.opening .pearl .ring { animation: none; opacity: 0; }
+.card.opening :is(.au-kicker, .t-aurora .gate-title, .t-aurora .gate-hint) { opacity: 0; transition: opacity .4s ease; }
+
+/* ---------- Приветствие ---------- */
+.au-star { width: 30px; margin-bottom: 18px; fill: var(--ink); filter: drop-shadow(0 0 8px var(--accent)); animation: au-twinkle 2.6s ease-in-out infinite; }
+@keyframes au-twinkle { 50% { transform: scale(.7) rotate(45deg); opacity: .6; } }
+.t-aurora .eyebrow { margin-bottom: 12px; font: 400 12px/1.4 var(--font-body); letter-spacing: .36em; text-transform: uppercase; color: var(--accent); opacity: 1; }
+.t-aurora .recipient { font-family: var(--font-head); font-weight: 200; font-size: clamp(60px, 18vw, 106px); line-height: 1.04; color: transparent;
+  background: linear-gradient(100deg, var(--ink) 8%, var(--accent) 32%, var(--accent3) 52%, var(--accent2) 72%, var(--ink) 92%) 0 0 / 220% 100%;
+  -webkit-background-clip: text; background-clip: text; animation: au-shimmer 9s linear infinite; }
+@keyframes au-shimmer { to { background-position: -220% 0; } }
+.au-divider { display: block; width: 150px; height: 1px; margin: 26px auto 0; background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent); }
+
+/* ---------- Текст и финал: стеклянные панели ---------- */
+.t-aurora :is(.scene-message, .scene-closing) .panel { padding: 40px 24px 32px; border: 1px solid rgba(255, 255, 255, .13); border-radius: 30px; background: rgba(255, 255, 255, .05); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 30px 80px -30px color-mix(in srgb, var(--accent2) 55%, transparent); }
+.t-aurora .message { font-family: var(--font-body); font-weight: 300; font-size: clamp(21px, 5.6vw, 26px); line-height: 1.6; }
+.t-aurora .message.long { font-size: clamp(18px, 4.8vw, 21px); }
+.t-aurora .signature { font: 400 13px/1.4 var(--font-body); letter-spacing: .2em; text-transform: uppercase; opacity: .9; }
+.t-aurora .signature b { font-family: var(--font-head); font-weight: 300; font-size: 38px; letter-spacing: .02em; text-transform: none; color: var(--accent); }
+.t-aurora .section-title { font-family: var(--font-head); font-weight: 200; font-size: clamp(32px, 9vw, 44px); }
+.t-aurora .photos img { border-radius: 26px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 22px 50px -18px color-mix(in srgb, var(--accent) 60%, transparent); }
+.au-orb-small { display: block; width: 56px; height: 56px; margin-bottom: 20px; border-radius: 50%; background: var(--orb); box-shadow: 0 0 30px 4px color-mix(in srgb, var(--accent) 55%, transparent); animation: au-pulse 3s ease-in-out infinite; }
+.t-aurora .final-thanks { font-family: var(--font-head); font-weight: 200; }
+.t-aurora .thanks { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: var(--bg); font-family: var(--font-body); font-weight: 500; }
+.t-aurora .next-btn { font: 400 13px var(--font-body); letter-spacing: .26em; text-transform: uppercase; }

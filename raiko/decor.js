@@ -1,5 +1,6 @@
 import { html, raw } from '../src/views/html.js';
 import { HORN_PATH } from './gates.js';
+import { getTheme } from './themes/index.js';
 
 const svg = (className, viewBox, body) => raw(`<svg class="${className}" viewBox="${viewBox}" aria-hidden="true">${body}</svg>`);
 const range = (count) => Array.from({ length: count }, (_, i) => i);
@@ -124,18 +125,21 @@ const CLOSING_LINES = {
 };
 
 export function renderBackdrop(templateId) {
-  return BACKDROPS[templateId]();
+  const theme = getTheme(templateId);
+  return theme ? theme.backdrop() : BACKDROPS[templateId]();
 }
 
 /**
  * @param {string} templateId
  * @param {'hello' | 'message' | 'photos' | 'closing'} scene
- * @param {{ initial: string }} data
+ * @param {{ initial: string, senderInitial: string, recipient: string, sender: string, year: number }} data
  */
 export function renderSceneDecor(templateId, scene, data) {
-  return SCENE_DECOR[templateId][scene]?.(data) ?? '';
+  const decor = getTheme(templateId)?.decor ?? SCENE_DECOR[templateId];
+  return decor[scene]?.(data) ?? '';
 }
 
-export function closingLine(templateId) {
-  return CLOSING_LINES[templateId];
+export function closingLine(templateId, data) {
+  const theme = getTheme(templateId);
+  return theme ? theme.closingLine(data) : CLOSING_LINES[templateId];
 }

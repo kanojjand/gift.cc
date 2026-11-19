@@ -1,5 +1,5 @@
 import { BRAND, whatsappLink } from '../brand.js';
-import { TEMPLATES, TIERS } from '../tiers.js';
+import { CATALOG, TIERS } from '../tiers.js';
 import { asset } from './assets.js';
 import { html, raw } from './html.js';
 
@@ -80,7 +80,7 @@ const templateLink = (template) => html`
   </a>`;
 
 export function landingPage() {
-  const group = (tier) => TEMPLATES.filter((template) => template.tier === tier).map(templateLink);
+  const group = (tier) => CATALOG.filter((template) => template.tier === tier).map(templateLink);
   return documentPage({
     title: `${BRAND.name}: QR-поздравления`,
     head: appCss,

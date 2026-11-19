@@ -31,14 +31,14 @@ export function makeContext(t, overrides = {}) {
   return { app, repo, storage, clock, config };
 }
 
-export function issueCard(repo, templateId = 'envelope', code = 'abcdefghjkmn') {
+export function issueCard(repo, templateId = 'newyear', code = 'abcdefghjkmn') {
   repo.createBatch({ tier: getTemplate(templateId).tier, label: 'test', codes: [code], now: 1 });
   return code;
 }
 
 export function greetingForm(overrides = {}, photos = []) {
   const form = new FormData();
-  const fields = { templateId: 'envelope', sender: 'Данияр', recipient: 'Айгерим', message: 'С праздником!', ...overrides };
+  const fields = { templateId: 'newyear', sender: 'Данияр', recipient: 'Айгерим', message: 'С праздником!', ...overrides };
   for (const [key, value] of Object.entries(fields)) form.append(key, value);
   for (const photo of photos) form.append('photos', new File([photo], 'p.jpg', { type: 'image/jpeg' }));
   return form;

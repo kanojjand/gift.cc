@@ -4,9 +4,10 @@ import { LIFETIME, LIMITS } from '../config.js';
 import { clientIp, createRateLimiter } from '../security.js';
 import { serveFile } from '../serve-file.js';
 import { sweep } from '../sweep.js';
-import { getTemplate, getTier, isTemplateAllowed, MAX_PHOTOS_ANY, templatesForTier } from '../tiers.js';
+import { getPalette, getTemplate, getTier, isPaletteAllowed, isTemplateAllowed, MAX_PHOTOS_ANY, templatesForTier } from '../tiers.js';
 import { isJpeg, isValidCode, isValidPhotoName, isValidSongFile, validateGreeting } from '../validation.js';
 import { renderCard } from '../../raiko/card.js';
+import { occasionsForTier } from '../texts.js';
 import { renderCatalog } from '../views/catalog.js';
 import { renderForm } from '../views/form.js';
 import { goneInfo, landingPage } from '../views/pages.js';
@@ -22,10 +23,23 @@ const DEMO = Object.freeze({
 
 const fail = (c, status, error, errors) => c.json({ success: false, error, errors }, status);
 
+/** Текст демо по теме шаблона: новогодний для Нового года, праздничный для дня рождения. */
+function demoMessage(template) {
+  const occasion = occasionsForTier('basic').find((item) => item.id === template.occasion);
+  return occasion?.texts.ru[0] ?? DEMO.message;
+}
+
 function selectSong(repo, template, rawId) {
   if (!rawId) return { ok: true, songId: null };
   const song = repo.getSong(Number(rawId));
   return song && song.templateId === template.id ? { ok: true, songId: song.id } : { ok: false };
+}
+
+/** Палитра из формы. Если страница формы старая и палитру не прислала, берётся первая. */
+function selectPalette(template, rawId) {
+  const id = rawId ? String(rawId) : null;
+  if (!id) return { ok: true, palette: template.palettes[0]?.id ?? null };
+  return isPaletteAllowed(template, id) ? { ok: true, palette: id } : { ok: false };
 }
 
 function collectPhotos(form, card) {
@@ -52,6 +66,9 @@ function exceedsTierSize(c, tierId) {
   return declared > getTier(tierId).maxPhotos * LIMITS.photoBytes + FORM_OVERHEAD_BYTES;
 }
 
+/** Шаблон можно заполнять, если он есть в каталоге этого кода или уже выбран в черновике (архивный шаблон). */
+const canUseTemplate = (template, card) => Boolean(template) && (isTemplateAllowed(template, card.tier) || template.id === card.templateId);
+
 export function publicRoutes({ repo, storage, now, config }) {
   const routes = new Hono();
   const allowRead = createRateLimiter({ windowMs: MINUTE_MS, max: 300 });
@@ -77,10 +94,12 @@ export function publicRoutes({ repo, storage, now, config }) {
     return song ? `/media/s/${song.file}` : null;
   };
 
-  const showCard = (c, card, mode, extra = {}) =>
-    c.html(
+  const showCard = (c, card, mode, extra = {}) => {
+    const template = getTemplate(card.templateId);
+    return c.html(
       renderCard({
-        template: getTemplate(card.templateId),
+        template,
+        palette: getPalette(template, card.palette),
         sender: card.sender,
         recipient: card.recipient,
         message: card.message,
@@ -88,26 +107,40 @@ export function publicRoutes({ repo, storage, now, config }) {
         songUrl: songUrlOf(card),
         mode,
         code: card.code,
+        today: now(),
         ...extra,
       }).value,
     );
+  };
 
   const showForm = (c, card, template) =>
     c.html(renderForm({ card, template, songs: repo.listSongs(template.id), maxPhotos: getTier(card.tier).maxPhotos, today: now() }).value);
+
+  /** Демо открыто из каталога: внизу кнопка «Выбрать этот шаблон», чтобы не возвращаться назад. */
+  const demoChoice = (fromCode, template, paletteId) => {
+    const card = isValidCode(String(fromCode)) ? repo.getCard(fromCode) : null;
+    if (!card || (card.status !== 'new' && card.status !== 'draft') || !isTemplateAllowed(template, card.tier)) return null;
+    return { code: card.code, href: `/c/${card.code}?template=${template.id}${paletteId ? `&palette=${paletteId}` : ''}`, back: `/c/${card.code}?pick=1` };
+  };
 
   routes.get('/', (c) => c.html(landingPage().value));
 
   routes.get('/demo/:templateId', (c) => {
     const template = getTemplate(c.req.param('templateId'));
     if (!template) return c.notFound();
+    const palette = getPalette(template, c.req.query('p'));
     const [song] = repo.listSongs(template.id);
     return c.html(
       renderCard({
         template,
+        palette,
         ...DEMO,
+        message: demoMessage(template),
         photoUrls: DEMO.photoUrls.slice(0, template.maxPhotos),
         songUrl: song ? `/media/s/${song.file}` : null,
         mode: 'demo',
+        today: now(),
+        choice: demoChoice(c.req.query('from'), template, palette?.id),
       }).value,
     );
   });
@@ -121,7 +154,7 @@ export function publicRoutes({ repo, storage, now, config }) {
     }
     const chosen = getTemplate(c.req.query('template'));
     const wantsCatalog = c.req.query('pick') === '1';
-    if (!wantsCatalog && isTemplateAllowed(chosen, card.tier)) return showForm(c, card, chosen);
+    if (!wantsCatalog && canUseTemplate(chosen, card)) return showForm(c, { ...card, wantedPalette: c.req.query('palette') }, chosen);
     if (card.status === 'draft' && !wantsCatalog) {
       return c.req.query('edit') === '1' ? showForm(c, card, getTemplate(card.templateId)) : showCard(c, card, 'draft');
     }
@@ -143,7 +176,9 @@ export function publicRoutes({ repo, storage, now, config }) {
 
       const form = await c.req.formData();
       const template = getTemplate(form.get('templateId'));
-      if (!isTemplateAllowed(template, card.tier)) return fail(c, 400, 'Этот шаблон недоступен для вашего кода');
+      if (!canUseTemplate(template, card)) return fail(c, 400, 'Этот шаблон недоступен для вашего кода');
+      const palette = selectPalette(template, form.get('palette'));
+      if (!palette.ok) return fail(c, 400, 'Такой палитры нет у этого шаблона');
       const greeting = validateGreeting(Object.fromEntries(form));
       if (!greeting.ok) return fail(c, 400, 'Проверьте поля формы', greeting.errors);
       const song = selectSong(repo, template, form.get('songId'));
@@ -157,8 +192,8 @@ export function publicRoutes({ repo, storage, now, config }) {
 
       const added = buffers.map((buffer) => storage.savePhoto(card.code, buffer));
       const finalPhotos = [...photos.keep, ...added];
-      const saved = repo.saveDraft(card.code, { ...greeting.value, templateId: template.id, songId: song.songId, photos: finalPhotos }, now());
-      if (!saved) {
+      const draft = { ...greeting.value, templateId: template.id, palette: palette.palette, songId: song.songId, photos: finalPhotos };
+      if (!repo.saveDraft(card.code, draft, now())) {
         storage.prunePhotos(card.code, repo.getCard(card.code).photos);
         return fail(c, 409, 'Открытка уже активирована');
       }

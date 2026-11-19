@@ -18,6 +18,8 @@ function hexagonPoints(radius) {
 
 const BRAND_HEXAGONS = raw(`<svg class="brand-hex" viewBox="-240 -240 480 480" aria-hidden="true">${HEXAGON_RADII.map((radius) => `<polygon points="${hexagonPoints(radius)}" fill="none" stroke="currentColor"/>`).join('')}</svg>`);
 const DATE_FORMAT = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Asia/Almaty' });
+const YEAR_MONTH_FORMAT = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: 'Asia/Almaty' });
+const NEW_YEAR_FROM_MONTH = 10;
 
 const initialOf = (name) => [...name.trim()][0]?.toUpperCase() ?? '♥';
 
@@ -37,7 +39,7 @@ function closingScene(templateId, sender, decorData) {
   const thanksText = encodeURIComponent(`${sender}, спасибо за поздравление! Мне очень приятно.`);
   return html`<section class="scene scene-closing"><div class="panel">
     ${renderSceneDecor(templateId, 'closing', decorData)}
-    <p class="reveal final-thanks">${closingLine(templateId)}</p>
+    <p class="reveal final-thanks">${closingLine(templateId, decorData)}</p>
     <a class="thanks reveal" href="https://wa.me/?text=${thanksText}" rel="noopener">Сказать спасибо</a>
     <button id="to-brand" class="next-btn reveal" type="button">Далее <span aria-hidden="true">→</span></button>
   </div></section>`;
@@ -61,7 +63,7 @@ function brandPage(mode, code) {
 
 function draftControls() {
   return html`<div class="draft-bar">
-      <span class="draft-label">Демо: проверьте открытку перед активацией</span>
+      <span class="draft-label">Шаг 3 из 3 · проверьте открытку и активируйте</span>
       <div class="draft-actions">
         <a id="edit" class="ui-btn ghost" href="?edit=1">Редактировать</a>
         <button id="activate" class="ui-btn" type="button">Активировать</button>
@@ -78,11 +80,18 @@ function draftControls() {
     </dialog>`;
 }
 
+/** Цвета палитры как CSS-переменные. Значения проверены при запуске: только #rrggbb. */
+function paletteStyle(palette) {
+  if (!palette) return '';
+  const { bg, bg2, ink, accent, accent2, accent3 } = palette;
+  return `:root{--bg:${bg};--bg2:${bg2};--ink:${ink};--accent:${accent};--accent2:${accent2};--accent3:${accent3};}`;
+}
+
 /**
  * Стили открытки встроены в страницу, шрифты грузятся параллельно и не задерживают первый экран:
  * на телефоне открытка показывается сразу после HTML. Имя на первом экране проявляется, когда шрифт готов.
  */
-function headLinks(template) {
+function headLinks(template, palette) {
   const fontsUrl = `https://fonts.googleapis.com/css2?${template.fonts}&display=swap`;
   return html`
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,24 +99,45 @@ function headLinks(template) {
     <link rel="preload" as="style" href="${fontsUrl}">
     <link id="card-fonts" rel="stylesheet" href="${fontsUrl}" media="print">
     <noscript><link rel="stylesheet" href="${fontsUrl}"></noscript>
-    <style>${raw(designFileText('css/card-base.css'))}${raw(designFileText(`css/${template.id}.css`))}</style>
+    <style>${raw(paletteStyle(palette))}${raw(designFileText('css/card-base.css'))}${raw(designFileText(`css/${template.id}.css`))}</style>
     <script src="${asset('design/js/card.js')}" defer></script>`;
 }
 
+/** Новый год, который поздравляют: с октября это уже следующий год. */
+function newYearOf(timestamp) {
+  const [year, month] = YEAR_MONTH_FORMAT.format(timestamp).split('-').map(Number);
+  return month >= NEW_YEAR_FROM_MONTH ? year + 1 : year;
+}
+
+/** Нижняя панель демо: палитры шаблона и кнопка «Выбрать», если демо открыли из каталога. */
+function demoBar(template, palette, choice) {
+  if (!template.palettes.length && !choice) return '';
+  const from = choice ? `&from=${choice.code}` : '';
+  return html`<nav class="demo-bar" aria-label="Цвет и выбор шаблона">
+    ${template.palettes.length ? html`<div class="demo-palettes" role="group" aria-label="Цветовая палитра">
+      ${template.palettes.map((item) => html`<a class="demo-swatch${item.id === palette?.id ? ' on' : ''}" href="?p=${item.id}${from}" aria-label="${item.name}" aria-current="${item.id === palette?.id ? 'true' : 'false'}" style="--s1:${item.bg};--s2:${item.accent};--s3:${item.accent2}"><i></i><small>${item.name}</small></a>`)}
+    </div>` : ''}
+    ${choice ? html`<div class="demo-actions"><a class="ui-btn ghost" href="${choice.back}">Назад</a><a class="ui-btn" href="${choice.href}">Выбрать этот</a></div>` : ''}
+  </nav>`;
+}
+
 /**
- * @param {{ template: object, sender: string, recipient: string, message: string, photoUrls: string[],
- *   songUrl: string | null, mode: 'live' | 'draft' | 'demo', code?: string, activatedNotice?: boolean, expiresAt?: number }} card
+ * @param {{ template: object, palette?: object | null, sender: string, recipient: string, message: string, photoUrls: string[],
+ *   songUrl: string | null, mode: 'live' | 'draft' | 'demo', code?: string, activatedNotice?: boolean, expiresAt?: number,
+ *   today?: number, choice?: { href: string, back: string, code: string } | null }} card
  */
-export function renderCard({ template, sender, recipient, message, photoUrls, songUrl, mode, code, activatedNotice, expiresAt }) {
-  const decorData = { initial: initialOf(recipient) };
-  const gate = renderGate(template.id, { recipient, ...decorData, firstPhoto: photoUrls[0] ?? null });
+export function renderCard({ template, palette = null, sender, recipient, message, photoUrls, songUrl, mode, code, activatedNotice, expiresAt, today = Date.now(), choice = null }) {
+  const decorData = { initial: initialOf(recipient), senderInitial: initialOf(sender), recipient, sender, year: newYearOf(today) };
+  const gate = renderGate(template.id, { ...decorData, firstPhoto: photoUrls[0] ?? null });
   const longClass = [...message].length > LONG_MESSAGE_CHARS ? 'long' : '';
+  const toneClass = palette ? ` tone-${palette.tone} pal-${palette.id}` : '';
+  const withDemoBar = mode === 'demo' && (template.palettes.length > 0 || Boolean(choice));
   return documentPage({
     title: `${recipient}, это поздравление тебе`,
-    themeColor: template.bg,
-    head: html`${headLinks(template)}${mode === 'draft' ? html`<script src="${asset('js/draft.js')}" defer></script>` : ''}`,
-    bodyClass: `locked mode-${mode}`,
-    body: html`<main class="card t-${template.id} fonts-wait" data-fx="${template.fx}" data-open-ms="${template.openMs}" data-code="${code ?? ''}" data-track="${mode === 'live' && !activatedNotice ? '1' : '0'}">
+    themeColor: palette?.bg ?? template.bg,
+    head: html`${headLinks(template, palette)}${mode === 'draft' ? html`<script src="${asset('js/draft.js')}" defer></script>` : ''}`,
+    bodyClass: `locked mode-${mode}${withDemoBar ? ' has-demo-bar' : ''}`,
+    body: html`<main class="card t-${template.id}${toneClass} fonts-wait" data-fx="${template.fx}" data-open-ms="${template.openMs}" data-code="${code ?? ''}" data-track="${mode === 'live' && !activatedNotice ? '1' : '0'}">
       <div class="backdrop" aria-hidden="true">${renderBackdrop(template.id)}</div>
       <canvas class="fx" aria-hidden="true"></canvas>
       ${songUrl ? html`<audio class="bg-music" src="${songUrl}" loop preload="none"></audio>
@@ -139,6 +169,7 @@ export function renderCard({ template, sender, recipient, message, photoUrls, so
       </div>
       ${brandPage(mode, code)}
       ${mode === 'draft' ? draftControls() : ''}
+      ${withDemoBar ? demoBar(template, palette, choice) : ''}
     </main>`,
   });
 }

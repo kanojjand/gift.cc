@@ -4,18 +4,116 @@
  * Поля:
  *   id      латиницей, совпадает с именем файла стилей assets/css/<id>.css
  *   tier    'basic' (обычный) или 'premium' (премиум)
+ *   retired true, если шаблон убран из каталога: уже заполненные открытки на нём продолжают открываться
+ *   tag     повод на карточке в каталоге: «Новый год», «День рождения»…
+ *   occasion id повода из texts.js, который сразу выбран в форме
  *   name    название в каталоге
  *   blurb   короткое описание в каталоге
- *   accent  акцентный цвет, bg  цвет фона (их же видно на карточке в каталоге)
- *   fx      частицы поверх открытки: 'none' | 'petals' | 'stars' | 'gold'
+ *   palettes цветовые палитры, из которых выбирает покупатель (первая выбрана сразу):
+ *           { id, name, bg, bg2, ink, accent, accent2, accent3? } → CSS-переменные --bg, --bg2, --ink, --accent…
+ *           Старые шаблоны без палитр задают цвета сами: accent и bg.
+ *   fx      частицы поверх открытки: 'none' | 'petals' | 'stars' | 'gold' | 'snow' | 'confetti' | 'hearts' | 'sparkle'
  *   openMs  сколько миллисекунд длится анимация открытия
  *   fonts   параметры Google Fonts (часть адреса после css2?), шрифты обязательно с казахскими буквами
  *   labels  подписи на открытке: eyebrow над именем, from перед подписью отправителя, photos над фото
+ *
+ * Проверенные шрифты с казахскими буквами: Rubik и Rubik Bubbles, Noto Serif Display, Cormorant Garamond,
+ * Prata, Lora, Montserrat, Nunito, Ysabeau, Onest, Caveat, Comfortaa, Lobster, Pacifico, Inter, Raleway.
+ * Без казахских букв (не брать): Playfair Display, Great Vibes, Unbounded, Manrope, Jost, Tenor Sans, Amatic SC.
  */
 export const DESIGNS = [
   {
+    id: 'newyear',
+    tier: 'basic',
+    tag: 'Новый год',
+    occasion: 'new-year',
+    name: 'Снежный шар',
+    blurb: 'Встряхни шар, и начнётся новогоднее волшебство',
+    fx: 'snow',
+    openMs: 2300,
+    fonts: 'family=Noto+Serif+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600',
+    labels: { eyebrow: 'С Новым годом,', from: 'С теплом,', photos: 'Лучшие моменты года' },
+    palettes: [
+      { id: 'midnight', name: 'Полночь', bg: '#0b1330', bg2: '#1c2b5e', ink: '#f6f1e7', accent: '#f2c46d', accent2: '#d6404e', accent3: '#9ec9ff' },
+      { id: 'fir', name: 'Ёлка', bg: '#0b281e', bg2: '#17473a', ink: '#f7f0e2', accent: '#ecc26c', accent2: '#cf3442', accent3: '#a6d9b8' },
+      { id: 'frost', name: 'Иней', bg: '#eaf2f9', bg2: '#c6dbee', ink: '#1b2a46', accent: '#2c6cb0', accent2: '#c43d4b', accent3: '#8fb4d9' },
+      { id: 'garnet', name: 'Гранат', bg: '#2b0913', bg2: '#5c1527', ink: '#fbefe4', accent: '#f0c987', accent2: '#ff8a7a', accent3: '#ffd9c2' },
+    ],
+  },
+  {
+    id: 'birthday',
+    tier: 'basic',
+    tag: 'День рождения',
+    occasion: 'birthday',
+    name: 'Сюрприз',
+    blurb: 'Подарок взрывается конфетти, а свечи на торте задувают касанием',
+    fx: 'confetti',
+    openMs: 1900,
+    fonts: 'family=Rubik+Bubbles&family=Rubik:wght@500;700;800&family=Nunito:wght@400;600;700',
+    labels: { eyebrow: 'С днём рождения,', from: 'Обнимаю,', photos: 'Самые классные кадры' },
+    palettes: [
+      { id: 'confetti', name: 'Конфетти', bg: '#fff5ea', bg2: '#ffdfeb', ink: '#2a1f3d', accent: '#ff4f8b', accent2: '#ffb627', accent3: '#1fc2b5' },
+      { id: 'party', name: 'Вечеринка', bg: '#170c2e', bg2: '#2e155c', ink: '#fff6ff', accent: '#ff4fd8', accent2: '#3ef0ff', accent3: '#ffe14d' },
+      { id: 'lemonade', name: 'Лимонад', bg: '#fffbe0', bg2: '#ffe9a3', ink: '#2b2a16', accent: '#ff7a2f', accent2: '#22b884', accent3: '#4f8bff' },
+      { id: 'mint', name: 'Мята', bg: '#e6fbf3', bg2: '#c4f0e0', ink: '#16382f', accent: '#ff6b5b', accent2: '#7a5cff', accent3: '#ffc93c' },
+    ],
+  },
+  {
+    id: 'love',
+    tier: 'basic',
+    tag: 'Для двоих',
+    occasion: 'love',
+    name: 'Замок сердца',
+    blurb: 'Замок с вашими инициалами открывается ключом',
+    fx: 'hearts',
+    openMs: 2300,
+    fonts: 'family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Lora:ital@0;1&family=Caveat:wght@500;700',
+    labels: { eyebrow: 'Только для тебя,', from: 'С любовью,', photos: 'Наши кадры' },
+    palettes: [
+      { id: 'bordeaux', name: 'Бордо', bg: '#25070f', bg2: '#4d1021', ink: '#fdeceb', accent: '#ff5c7a', accent2: '#f5c2c0', accent3: '#ffd29d' },
+      { id: 'blush', name: 'Румянец', bg: '#fff1f3', bg2: '#ffd3dd', ink: '#4a1326', accent: '#de2a5b', accent2: '#f39bb2', accent3: '#c98a5e' },
+      { id: 'champagne', name: 'Шампань', bg: '#f6eee4', bg2: '#e9d5bf', ink: '#3b2a22', accent: '#a9714a', accent2: '#d9a6a0', accent3: '#8c5a3c' },
+      { id: 'violet', name: 'Ночь', bg: '#100b22', bg2: '#271a4a', ink: '#f3eaff', accent: '#c084fc', accent2: '#ff8fb1', accent3: '#ffe3a3' },
+    ],
+  },
+  {
+    id: 'bloom',
+    tier: 'premium',
+    tag: 'Без повода',
+    name: 'Цветение',
+    blurb: 'Бутон раскрывается в цветок, а открытка листается как журнал',
+    fx: 'petals',
+    openMs: 2400,
+    fonts: 'family=Prata&family=Lora:ital,wght@0,400;0,500;1,400&family=Montserrat:wght@500;600',
+    labels: { eyebrow: 'Распустилось для тебя', from: 'С любовью,', photos: 'Моменты в цвету' },
+    palettes: [
+      { id: 'peony', name: 'Пион', bg: '#fbf2ec', bg2: '#f3dbd1', ink: '#3a2626', accent: '#d25a74', accent2: '#7f9f7c', accent3: '#f2b8a2' },
+      { id: 'peach', name: 'Персик', bg: '#fff6ec', bg2: '#ffdfc4', ink: '#3b2718', accent: '#e9733a', accent2: '#6f946a', accent3: '#ffc49b' },
+      { id: 'lilac', name: 'Сирень', bg: '#f5f0fa', bg2: '#e2d5f1', ink: '#2c2341', accent: '#8a69cf', accent2: '#6f9e8c', accent3: '#d6a4e0' },
+      { id: 'night-garden', name: 'Ночной сад', bg: '#121814', bg2: '#1f2c23', ink: '#f2ece2', accent: '#ec9bb3', accent2: '#93c29c', accent3: '#f4d5a7' },
+    ],
+  },
+  {
+    id: 'aurora',
+    tier: 'premium',
+    tag: 'Без повода',
+    name: 'Сияние',
+    blurb: 'Северное сияние и жемчужина света, которая раскрывается от касания',
+    fx: 'sparkle',
+    openMs: 2100,
+    fonts: 'family=Ysabeau:ital,wght@0,200;0,300;0,500;1,300&family=Onest:wght@300;400;500',
+    labels: { eyebrow: 'Этот свет для тебя,', from: 'С теплом,', photos: 'Светлые мгновения' },
+    palettes: [
+      { id: 'north', name: 'Север', bg: '#040814', bg2: '#0b1a33', ink: '#eaf6ff', accent: '#4ff0b6', accent2: '#7b61ff', accent3: '#38c9ff' },
+      { id: 'sunset', name: 'Закат', bg: '#12050f', bg2: '#2b0b26', ink: '#fff0ea', accent: '#ff8a5b', accent2: '#ff3d8b', accent3: '#ffd166' },
+      { id: 'lavender', name: 'Лаванда', bg: '#0d0a1e', bg2: '#1d1640', ink: '#f2edff', accent: '#b8a2ff', accent2: '#62d2ff', accent3: '#ff9ad5' },
+      { id: 'ocean', name: 'Океан', bg: '#02121a', bg2: '#06303d', ink: '#e8fbff', accent: '#2fe0c8', accent2: '#3a7bff', accent3: '#a3f7ff' },
+    ],
+  },
+  {
     id: 'envelope',
     tier: 'basic',
+    retired: true,
     name: 'Конверт',
     blurb: 'Письмо с сургучной печатью',
     accent: '#8c2f39',
@@ -28,6 +126,7 @@ export const DESIGNS = [
   {
     id: 'tulips',
     tier: 'basic',
+    retired: true,
     name: 'Тюльпаны',
     blurb: 'Цветы вырастают от касания',
     accent: '#d6336c',
@@ -40,6 +139,7 @@ export const DESIGNS = [
   {
     id: 'night',
     tier: 'basic',
+    retired: true,
     name: 'Звёздная ночь',
     blurb: 'Падающая звезда и желание',
     accent: '#f5c66b',
@@ -52,6 +152,7 @@ export const DESIGNS = [
   {
     id: 'polaroid',
     tier: 'basic',
+    retired: true,
     name: 'Полароид',
     blurb: 'Снимок проявляется на глазах',
     accent: '#7a4a21',
@@ -64,6 +165,7 @@ export const DESIGNS = [
   {
     id: 'watercolor',
     tier: 'basic',
+    retired: true,
     name: 'Акварель',
     blurb: 'Краски расцветают по бумаге',
     accent: '#a0527d',
@@ -76,6 +178,7 @@ export const DESIGNS = [
   {
     id: 'gold',
     tier: 'premium',
+    retired: true,
     name: 'Чёрное золото',
     blurb: 'Двери в стиле ар-деко и золотая пыль',
     accent: '#d9b25f',
@@ -88,6 +191,7 @@ export const DESIGNS = [
   {
     id: 'garden',
     tier: 'premium',
+    retired: true,
     name: 'Ботанический сад',
     blurb: 'Листья расступаются, открывая сад',
     accent: '#e7d8a8',
@@ -100,6 +204,7 @@ export const DESIGNS = [
   {
     id: 'cinema',
     tier: 'premium',
+    retired: true,
     name: 'Премьера',
     blurb: 'Обратный отсчёт и фильм о вас',
     accent: '#f2e3c6',
@@ -112,6 +217,7 @@ export const DESIGNS = [
   {
     id: 'silk',
     tier: 'premium',
+    retired: true,
     name: 'Шёлк и розы',
     blurb: 'Занавес открывается под дождь лепестков',
     accent: '#e9c98f',
@@ -124,6 +230,7 @@ export const DESIGNS = [
   {
     id: 'ornament',
     tier: 'premium',
+    retired: true,
     name: 'Шаңырақ',
     blurb: 'Казахский орнамент и шаңырақ',
     accent: '#e8c36a',

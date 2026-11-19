@@ -1,5 +1,5 @@
 import { LIMITS } from '../config.js';
-import { getTemplate, TEMPLATES, templatesForTier, TIERS } from '../tiers.js';
+import { getTemplate, CATALOG, templatesForTier, TIERS } from '../tiers.js';
 import { asset } from './assets.js';
 import { html, raw } from './html.js';
 import { brandFonts, brandLockup, documentPage } from './pages.js';
@@ -108,7 +108,7 @@ function createBatchForm(songsLoaded, baseUrl) {
         <button class="primary big">Создать коды</button>
       </div>
     </form>
-    <p class="hint">Коды ведут на ${baseUrl}. Шаблон покупатель выбирает сам. Музыка: ${songsLoaded} из ${TEMPLATES.length * LIMITS.songSlots}.</p>
+    <p class="hint">Коды ведут на ${baseUrl}. Шаблон покупатель выбирает сам. Музыка: ${songsLoaded} из ${CATALOG.length * LIMITS.songSlots}.</p>
   </section>`;
 }
 
@@ -243,7 +243,7 @@ function templateSongs(template, songs, storage, isOpen) {
 }
 
 export function songsPage({ repo, storage, error, notice, open }) {
-  const entries = TEMPLATES.map((template) => ({ template, songs: repo.listSongs(template.id) }));
+  const entries = CATALOG.map((template) => ({ template, songs: repo.listSongs(template.id) }));
   const total = entries.reduce((sum, entry) => sum + entry.songs.length, 0);
   const firstIncomplete = entries.find((entry) => entry.songs.length < LIMITS.songSlots)?.template.id;
   const openId = getTemplate(open)?.id ?? firstIncomplete;
@@ -251,7 +251,7 @@ export function songsPage({ repo, storage, error, notice, open }) {
     'Музыка',
     html`<div class="title-row page-head">
       <div><h1>Музыка</h1><p class="hint">Файл до 60 МБ. Сервер сам обрежет песню до 90 секунд и сожмёт её.</p></div>
-      <p class="total"><b>${total}</b> из ${TEMPLATES.length * LIMITS.songSlots} мелодий</p>
+      <p class="total"><b>${total}</b> из ${CATALOG.length * LIMITS.songSlots} мелодий</p>
     </div>
     ${entries.map(({ template, songs }) => templateSongs(template, songs, storage, template.id === openId))}`,
     { active: 'songs', notice, errorText: error },

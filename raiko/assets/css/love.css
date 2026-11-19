@@ -1,0 +1,94 @@
+/* Для двоих «Замок сердца». Палитра: --accent (металл замка, сердца), --accent2 (второй тон), --accent3 (ключ). */
+:root {
+  --font-head: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-hand: 'Caveat', cursive;
+  --word-fx: wordBlur;
+  --paper: rgba(255, 255, 255, .06);
+  --paper-line: rgba(255, 255, 255, .14);
+  --blob-opacity: .5;
+}
+.t-love.tone-light { --paper: rgba(255, 255, 255, .72); --paper-line: color-mix(in srgb, var(--accent) 22%, transparent); --blob-opacity: .32; }
+
+/* ---------- Фон: мягкие светящиеся пятна ---------- */
+.t-love .backdrop { background: var(--bg); }
+.lv-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: var(--blob-opacity); animation: lv-drift 16s ease-in-out infinite alternate; }
+.lv-blob.b1 { top: -12vh; left: -24vw; width: 78vw; height: 78vw; background: var(--accent); }
+.lv-blob.b2 { top: 34vh; right: -30vw; width: 86vw; height: 86vw; background: var(--accent2); opacity: calc(var(--blob-opacity) * .7); animation-delay: -6s; }
+.lv-blob.b3 { bottom: -22vh; left: 8vw; width: 64vw; height: 64vw; background: var(--bg2); opacity: .9; animation-delay: -11s; }
+@keyframes lv-drift { to { transform: translate(9vw, 7vh) scale(1.15); } }
+
+/* ---------- Первый экран: замок ---------- */
+.t-love .gate { gap: 8px; background: radial-gradient(90% 60% at 50% 46%, var(--bg2), var(--bg) 76%); }
+.lv-halo { position: absolute; top: 46%; left: 50%; width: 130vw; max-width: 680px; aspect-ratio: 1; transform: translate(-50%, -50%); background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), transparent 72%); pointer-events: none; animation: lv-halo 2.2s ease-in-out infinite; }
+@keyframes lv-halo { 50% { transform: translate(-50%, -50%) scale(1.08); opacity: .75; } }
+.lv-kicker { position: relative; z-index: 2; margin: 0; font: italic 500 19px/1 var(--font-head); letter-spacing: .1em; color: var(--accent2); }
+.lock { position: relative; z-index: 3; width: min(56vw, 214px); margin: 6px 0 2px; animation: lv-beat 2.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+@keyframes lv-beat { 0%, 40%, 100% { transform: scale(1); } 10% { transform: scale(1.05); } 22% { transform: scale(1.01); } 30% { transform: scale(1.04); } }
+.lock-svg { display: block; width: 100%; overflow: visible; }
+.metal-hi { stop-color: color-mix(in srgb, var(--accent) 50%, #fff); }
+.metal-mid { stop-color: var(--accent); }
+.metal-lo { stop-color: color-mix(in srgb, var(--accent) 62%, #000); }
+.lock-heart { fill: url(#lv-metal); filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .35)); transition: filter .6s ease 1.1s; }
+.lock-rim { fill: none; stroke: rgba(255, 255, 255, .4); stroke-width: 1.4; stroke-dasharray: 2 5; }
+.shackle { fill: none; stroke: color-mix(in srgb, var(--accent) 35%, #e9e4e8); stroke-width: 15; stroke-linecap: round; transform-box: view-box; transform-origin: 62px 124px; transition: transform .7s cubic-bezier(.3, 1.5, .5, 1) 1s; }
+.engrave { font: italic 600 31px var(--font-head); fill: color-mix(in srgb, var(--accent) 30%, #000); fill-opacity: .72; stroke: rgba(255, 255, 255, .35); stroke-width: .7; paint-order: stroke; letter-spacing: .04em; }
+.keyhole { fill: color-mix(in srgb, var(--accent) 28%, #000); }
+.key { position: absolute; top: 69%; left: 62%; width: 52%; transform-origin: 12% 50%; transform: rotate(-26deg) translate(18%, -10%); filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .3)); }
+.key-svg { display: block; width: 100%; transform: scaleX(-1); }
+.key-svg path { fill: color-mix(in srgb, var(--accent3) 65%, #fff); }
+.t-love .gate-title { margin: 4px 0 0; font-style: italic; font-weight: 500; font-size: clamp(38px, 11vw, 56px); color: var(--ink); }
+.t-love .gate-hint { font: italic 400 17px/1.3 var(--font-head); opacity: .75; }
+
+/* Открытие: ключ входит в скважину и поворачивается, дужка отщёлкивается, сердце вспыхивает. */
+.card.opening .lock { animation: lv-away .8s ease 1.65s forwards; }
+@keyframes lv-away { to { transform: scale(1.35); opacity: 0; } }
+.card.opening .key { animation: lv-key 1s cubic-bezier(.6, 0, .3, 1) forwards; }
+@keyframes lv-key {
+  0% { transform: rotate(-26deg) translate(18%, -10%); }
+  55% { transform: rotate(0deg) translate(-41%, -2%); }
+  70% { transform: rotate(0deg) translate(-44%, -2%); }
+  100% { transform: rotate(0deg) translate(-44%, -2%) scaleY(.2); }
+}
+.card.opening .shackle { transform: translateY(-24px) rotate(-30deg); }
+.card.opening .lock-heart { filter: drop-shadow(0 0 32px var(--accent)) brightness(1.18); }
+.card.opening :is(.lv-kicker, .t-love .gate-hint, .t-love .gate-title) { opacity: 0; transition: opacity .5s ease .2s; }
+
+/* ---------- Приветствие ---------- */
+.t-love .eyebrow { margin-bottom: 4px; font: italic 500 23px/1.2 var(--font-head); color: var(--accent2); opacity: 1; }
+.t-love.tone-light :is(.eyebrow, .lv-kicker, .final-thanks) { color: var(--accent); }
+.t-love .recipient { font-style: italic; font-weight: 500; font-size: clamp(62px, 19vw, 108px); line-height: 1; color: var(--ink); text-shadow: 0 0 54px color-mix(in srgb, var(--accent) 50%, transparent); }
+.lv-beat { display: block; width: 210px; margin: 20px auto 0; overflow: visible; }
+.lv-beat .beat-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; }
+.scene.in .lv-beat .beat-line { animation: lv-draw 1.4s ease .5s forwards; }
+.scene.in .lv-beat .beat-tail { animation-delay: 1.3s; }
+@keyframes lv-draw { to { stroke-dashoffset: 0; } }
+.lv-beat .beat-heart { fill: var(--accent); transform-box: fill-box; transform-origin: center; transform: scale(0); }
+.scene.in .lv-beat .beat-heart { animation: lv-pop .5s cubic-bezier(.3, 1.6, .5, 1) 1.05s forwards, lv-heartbeat 1.4s ease-in-out 1.7s infinite; }
+@keyframes lv-pop { to { transform: scale(1); } }
+@keyframes lv-heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }
+
+/* ---------- Текст: письмо с сургучной печатью ---------- */
+.t-love .scene-message .panel { padding: 54px 26px 32px; border: 1px solid var(--paper-line); border-radius: 6px; background: var(--paper); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 30px 60px -32px rgba(0, 0, 0, .5); }
+.lv-seal { position: absolute; top: -32px; left: 50%; width: 64px; margin-left: -32px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .3)); }
+.lv-seal .wax { fill: var(--accent); }
+.lv-seal .wax-heart { fill: color-mix(in srgb, var(--accent) 55%, #000); opacity: .55; }
+.t-love .message { font-family: var(--font-body); font-style: italic; font-size: clamp(20px, 5.4vw, 25px); line-height: 1.6; }
+.t-love .message.long { font-size: clamp(17px, 4.6vw, 20px); }
+.t-love .signature span { font: italic 500 21px var(--font-head); }
+.t-love .signature b { font-family: var(--font-hand); font-weight: 700; font-size: 44px; line-height: 1; color: var(--accent); }
+
+/* ---------- Фото: кадры плёнки ---------- */
+.t-love .section-title { font-style: italic; font-weight: 500; font-size: clamp(36px, 10vw, 46px); }
+.t-love .photos figure { position: relative; padding: 24px 9px; border-radius: 4px; background: #121012; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, .6); }
+.t-love .photos figure::before, .t-love .photos figure::after { content: ''; position: absolute; left: 8px; right: 8px; height: 9px; border-radius: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .88) 0 9px, transparent 9px 18px); opacity: .85; }
+.t-love .photos figure::before { top: 8px; }
+.t-love .photos figure::after { bottom: 8px; }
+.t-love .photos img { aspect-ratio: 4 / 5; filter: saturate(.92) contrast(1.04); }
+
+/* ---------- Финал: два имени ---------- */
+.lv-pair { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 14px; margin: 0 0 16px; font: italic 500 clamp(32px, 9.4vw, 46px)/1.1 var(--font-head); color: var(--ink); overflow-wrap: anywhere; }
+.lv-pair-heart { width: 30px; flex: none; fill: var(--accent); animation: lv-heartbeat 1.4s ease-in-out infinite; }
+.t-love .final-thanks { font-family: var(--font-hand); font-weight: 700; font-size: clamp(32px, 9.4vw, 44px); color: var(--accent2); }
+.t-love .thanks { background: var(--accent); color: #fff; font-family: var(--font-body); }
+.t-love .next-btn { font: italic 500 20px var(--font-head); }

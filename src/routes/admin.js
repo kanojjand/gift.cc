@@ -12,7 +12,7 @@ import {
   passwordMatches,
   SESSION_MAX_AGE_SECONDS,
 } from '../security.js';
-import { getTemplate, getTier, TEMPLATES } from '../tiers.js';
+import { getTemplate, getTier, CATALOG } from '../tiers.js';
 import { generateCodes, isValidCode, parseQuantity, SONG_TYPES, songExtension } from '../validation.js';
 import { batchPage, dashboardPage, loginPage, printPage, songsPage } from '../views/admin.js';
 
@@ -68,7 +68,7 @@ function registerAuth(routes, { config, now }) {
 function registerBatches(routes, { repo, storage, now, config }) {
   const urlOf = (code) => `${config.baseUrl}/c/${code}`;
 
-  const songsLoaded = () => TEMPLATES.reduce((sum, template) => sum + repo.listSongs(template.id).length, 0);
+  const songsLoaded = () => CATALOG.reduce((sum, template) => sum + repo.listSongs(template.id).length, 0);
   const dashboard = (c, error, status = 200) =>
     c.html(
       dashboardPage({ batches: repo.listBatches(), baseUrl: config.baseUrl, songsLoaded: songsLoaded(), notice: c.req.query('ok'), error: error ?? c.req.query('err') }).value,

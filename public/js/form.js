@@ -11,6 +11,7 @@
   const formError = document.getElementById('form-error');
   const submit = document.getElementById('submit');
   const maxPhotos = Number(list.dataset.max);
+  const SUBMIT_LABEL = submit.textContent;
   const newPhotos = new Map();
 
   const tiles = () => [...list.querySelectorAll('.thumb:not(.add)')];
@@ -198,6 +199,8 @@
     ['sender', 'recipient', 'message'].forEach((name) => payload.append(name, form.elements[name].value));
     const song = form.querySelector('input[name="songId"]:checked');
     if (song) payload.append('songId', song.value);
+    const palette = form.querySelector('input[name="palette"]:checked');
+    if (palette) payload.append('palette', palette.value);
     tiles().forEach((tile) => {
       if (tile.dataset.keep) payload.append('keep', tile.dataset.keep);
       else payload.append('photos', newPhotos.get(tile), 'photo.jpg');
@@ -231,7 +234,19 @@
       formError.textContent = 'Нет связи. Проверьте интернет и попробуйте ещё раз';
     }
     submit.disabled = false;
-    submit.textContent = 'Далее';
+    submit.textContent = SUBMIT_LABEL;
+  });
+
+  /* Палитра: обложка формы перекрашивается сразу, ссылка «посмотреть» ведёт на демо в выбранном цвете. */
+  const hero = document.getElementById('form-hero');
+  const palettePreview = document.getElementById('palette-preview');
+  const PALETTE_VARS = ['--p-bg', '--p-bg2', '--p-ink', '--p-a', '--p-a2'];
+  form.querySelectorAll('input[name="palette"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      const swatch = radio.closest('.palette');
+      PALETTE_VARS.forEach((name) => hero?.style.setProperty(name, swatch.style.getPropertyValue(name)));
+      if (palettePreview) palettePreview.href = `/demo/${form.dataset.template}?p=${encodeURIComponent(radio.value)}`;
+    });
   });
 
   /* Выбор фото на телефоне может выгрузить страницу из памяти: текст не должен пропасть. Хранилище необязательно. */

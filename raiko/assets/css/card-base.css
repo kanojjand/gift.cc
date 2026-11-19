@@ -7,6 +7,8 @@ img { display: block; max-width: 100%; }
 [hidden] { display: none !important; }
 
 .fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+/* Во время открытия частицы поверх первого экрана: взрыв конфетти и сердец виден сразу. */
+.card.opening:not(.opened) .fx { z-index: 25; }
 
 .gate {
   position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -105,6 +107,20 @@ img { display: block; max-width: 100%; }
 .draft-actions .ui-btn { flex: 1; }
 .mode-draft .scene-closing, .mode-draft .brand-inner { padding-bottom: 150px; }
 .mode-draft .gate { padding-bottom: 130px; }
+
+/* Панель демо: палитры шаблона и кнопка «Выбрать этот», если демо открыли из каталога. */
+.demo-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); background: rgba(14, 14, 16, .86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: #fff; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.demo-palettes { display: flex; justify-content: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.demo-swatch { display: flex; flex: none; flex-direction: column; align-items: center; gap: 4px; min-width: 66px; padding: 2px 0; color: #bdbdbd; font-size: 11.5px; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.demo-swatch i { width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(var(--s2) 0 33%, var(--s3) 0 66%, var(--s1) 0); box-shadow: 0 0 0 2px rgba(255, 255, 255, .2); }
+.demo-swatch.on { color: #fff; }
+.demo-swatch.on i { box-shadow: 0 0 0 2px #0e0e10, 0 0 0 4px #fff; }
+.demo-actions { display: flex; gap: 10px; width: 100%; max-width: 480px; margin: 0 auto; }
+.demo-actions .ui-btn { flex: 1; background: #fff; color: #111; }
+.demo-actions .ui-btn.ghost { background: rgba(255, 255, 255, .12); color: #fff; }
+.has-demo-bar .gate { padding-bottom: 150px; }
+.has-demo-bar .scene-closing, .has-demo-bar .brand-inner { padding-bottom: 180px; }
+.has-demo-bar .demo-note { top: max(14px, env(safe-area-inset-top)); }
 
 .ui-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border-radius: 12px; background: #1f1f24; color: #fff; font: 600 16px system-ui, -apple-system, 'Segoe UI', sans-serif; text-decoration: none; }
 .ui-btn.ghost { background: #eee; color: #222; }

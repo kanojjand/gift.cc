@@ -48,7 +48,7 @@ test('cross-site admin post is refused', async (t) => {
   const res = await app.request('/admin/batches', {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://evil.example', cookie },
-    body: new URLSearchParams({ templateId: 'gold', quantity: '1' }),
+    body: new URLSearchParams({ templateId: 'bloom', quantity: '1' }),
   });
   assert.equal(res.status, 403);
 });
@@ -120,7 +120,7 @@ test('block takes a card down and removes its content', async (t) => {
 });
 
 async function uploadSong(app, cookie, slot, form = songForm()) {
-  return app.request(`/admin/songs/envelope/${slot}`, { method: 'POST', headers: { cookie, origin: ORIGIN }, body: form });
+  return app.request(`/admin/songs/newyear/${slot}`, { method: 'POST', headers: { cookie, origin: ORIGIN }, body: form });
 }
 
 test('each template holds three song slots and the form offers them', async (t) => {
@@ -128,9 +128,9 @@ test('each template holds three song slots and the form offers them', async (t) 
   const cookie = await loginCookie(app);
   assert.equal((await uploadSong(app, cookie, 1)).status, 302);
   assert.equal((await uploadSong(app, cookie, 4)).status, 400);
-  const [song] = repo.listSongs('envelope');
+  const [song] = repo.listSongs('newyear');
   const code = issueCard(repo);
-  assert.match(await (await app.request(`/c/${code}?template=envelope`)).text(), /Весна/);
+  assert.match(await (await app.request(`/c/${code}?template=newyear`)).text(), /Весна/);
 
   const res = await postForm(app, `/c/${code}`, greetingForm({ songId: String(song.id) }));
   assert.equal(res.status, 200);
@@ -141,16 +141,16 @@ test('card cannot use a song from another template', async (t) => {
   const { app, repo } = makeContext(t);
   const cookie = await loginCookie(app);
   await uploadSong(app, cookie, 1);
-  const [song] = repo.listSongs('envelope');
-  const code = issueCard(repo, 'tulips', 'tupcde234567');
-  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'tulips', songId: String(song.id) }))).status, 400);
+  const [song] = repo.listSongs('newyear');
+  const code = issueCard(repo, 'birthday', 'tupcde234567');
+  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'birthday', songId: String(song.id) }))).status, 400);
 });
 
 test('songs support range requests for iPhone playback', async (t) => {
   const { app, repo } = makeContext(t);
   const cookie = await loginCookie(app);
   await uploadSong(app, cookie, 1);
-  const [song] = repo.listSongs('envelope');
+  const [song] = repo.listSongs('newyear');
   const res = await app.request(`/media/s/${song.file}`, { headers: { range: 'bytes=0-99' } });
   assert.equal(res.status, 206);
   assert.equal(res.headers.get('content-range'), 'bytes 0-99/2000');
@@ -174,7 +174,7 @@ test('uploaded song is replaced by its compressed version', async (t) => {
   const { app, repo, config } = makeContext(t, { compressSong });
   const cookie = await loginCookie(app);
   await uploadSong(app, cookie, 1);
-  const [song] = repo.listSongs('envelope');
+  const [song] = repo.listSongs('newyear');
   assert.match(song.file, /\.m4a$/);
   assert.equal(song.mime, 'audio/mp4');
   assert.deepEqual(readdirSync(join(config.dataDir, 'songs')), [song.file]);
@@ -185,7 +185,7 @@ test('song stays as uploaded when compression is unavailable', async (t) => {
   const { app, repo } = makeContext(t);
   const cookie = await loginCookie(app);
   await uploadSong(app, cookie, 1);
-  const [song] = repo.listSongs('envelope');
+  const [song] = repo.listSongs('newyear');
   assert.match(song.file, /\.mp3$/);
   assert.equal(song.mime, 'audio/mpeg');
 });
@@ -208,7 +208,7 @@ test('dashboard shows the activation and opening funnel', async (t) => {
   const { app, repo } = makeContext(t);
   const cookie = await loginCookie(app);
   const code = issueCard(repo);
-  issueCard(repo, 'envelope', 'defghjkmnpqr');
+  issueCard(repo, 'newyear', 'defghjkmnpqr');
   await postForm(app, `/c/${code}`, greetingForm());
   await app.request(`/c/${code}/activate`, { method: 'POST' });
   await app.request(`/c/${code}/opened`, { method: 'POST' });
@@ -270,7 +270,7 @@ test('dashboard shows notices only for known keys and warns about templates with
   const cookie = await loginCookie(app);
   const known = await (await app.request('/admin?ok=batch-deleted', { headers: { cookie } })).text();
   assert.match(known, /Партия удалена/);
-  assert.match(known, /Музыка: 0 из 30/);
+  assert.match(known, /Музыка: 0 из 15/);
   const unknown = await (await app.request('/admin?ok=%3Cscript%3E', { headers: { cookie } })).text();
   assert.ok(!unknown.includes('class="flash'));
 });
@@ -279,7 +279,7 @@ test('an empty suffix range is refused instead of crashing', async (t) => {
   const { app, repo } = makeContext(t);
   const cookie = await loginCookie(app);
   await uploadSong(app, cookie, 1);
-  const [song] = repo.listSongs('envelope');
+  const [song] = repo.listSongs('newyear');
   const res = await app.request(`/media/s/${song.file}`, { headers: { range: 'bytes=-0' } });
   assert.equal(res.status, 416);
 });
@@ -302,9 +302,9 @@ test('a full rate limiter keeps existing counters', () => {
 
 test('sweep removes orphaned photos but keeps photos of live drafts', async (t) => {
   const { app, repo, storage, clock } = makeContext(t);
-  const orphanCode = issueCard(repo, 'envelope', 'bcdefghjkmnp');
+  const orphanCode = issueCard(repo, 'newyear', 'bcdefghjkmnp');
   const orphan = storage.savePhoto(orphanCode, JPEG);
-  const draftCode = issueCard(repo, 'envelope', 'cdefghjkmnpq');
+  const draftCode = issueCard(repo, 'newyear', 'cdefghjkmnpq');
   await postForm(app, `/c/${draftCode}`, greetingForm({}, [JPEG]));
   const [kept] = repo.getCard(draftCode).photos;
 

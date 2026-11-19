@@ -1,0 +1,88 @@
+/* «Цветение»: журнал о флористике. Палитра: --accent (цветок), --accent2 (листья), --accent3 (светлые лепестки). */
+:root {
+  --font-head: 'Prata', Georgia, serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-label: 'Montserrat', system-ui, sans-serif;
+  --word-fx: wordFade;
+  --fx-color: var(--accent3);
+}
+
+/* ---------- Фон: контуры больших цветов ---------- */
+.t-bloom .backdrop { background: radial-gradient(90% 50% at 80% 0%, var(--bg2), transparent 70%), radial-gradient(80% 50% at 0% 100%, var(--bg2), transparent 70%), var(--bg); }
+.bl-outline { position: absolute; width: 92vw; max-width: 540px; fill: none; stroke: var(--accent); stroke-width: .8; opacity: .16; animation: bl-turn 90s linear infinite; }
+.bl-outline.o1 { top: -22vw; right: -32vw; }
+.bl-outline.o2 { bottom: -26vw; left: -36vw; animation-direction: reverse; }
+@keyframes bl-turn { to { transform: rotate(360deg); } }
+
+/* ---------- Первый экран: бутон ---------- */
+.t-bloom .gate { gap: 2px; background: radial-gradient(80% 50% at 50% 46%, var(--bg2), var(--bg) 72%); }
+.bl-mast { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; width: min(86vw, 360px); margin: 0 0 8px; font: 600 10.5px/1 var(--font-label); letter-spacing: .32em; text-transform: uppercase; color: var(--ink); }
+.bl-mast i { flex: 1; height: 1px; background: currentColor; opacity: .4; }
+.t-bloom .gate-title { margin: 4px 0 0; font-family: var(--font-head); font-size: clamp(42px, 12.5vw, 66px); line-height: 1.05; color: var(--ink); }
+.bud { position: relative; z-index: 3; width: min(62vw, 250px); margin-top: -4px; -webkit-tap-highlight-color: transparent; }
+.bl-flower { display: block; width: 100%; overflow: visible; }
+.bl-flower .stem { fill: none; stroke: var(--accent2); stroke-width: 4; stroke-linecap: round; }
+.bl-flower .leaf { fill: var(--accent2); }
+.bl-flower .leaf-r { fill: color-mix(in srgb, var(--accent2) 78%, #fff); }
+.bl-flower .petal { stroke: color-mix(in srgb, var(--accent) 70%, #000); stroke-width: .6; stroke-opacity: .3;
+  transform-box: view-box; transform-origin: 0 0; transform: rotate(var(--b)) scale(.42, .74);
+  transition: transform 1.3s cubic-bezier(.3, 1.25, .4, 1); transition-delay: calc(.2s + var(--i) * .035s); }
+.bl-flower .petal.l1 { fill: var(--accent3); }
+.bl-flower .petal.l2 { fill: color-mix(in srgb, var(--accent) 70%, var(--accent3)); }
+.bl-flower .petal.l3 { fill: var(--accent); }
+.bl-flower .core { fill: color-mix(in srgb, var(--accent) 40%, #e9b949); transform-box: view-box; transform-origin: 0 0; transform: scale(.3); opacity: 0; transition: transform .9s ease .6s, opacity .4s ease .6s; }
+.card.opening .bl-flower .core { opacity: 1; }
+.bl-flower .stamen { fill: #f2cf6b; opacity: 0; transition: opacity .6s ease 1.2s; }
+.bloom-head { transform-box: view-box; transform-origin: 0 0; animation: bl-sway 3.2s ease-in-out infinite alternate; }
+@keyframes bl-sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+.t-bloom .gate-hint { font: 600 11px/1.4 var(--font-label); letter-spacing: .26em; text-transform: uppercase; opacity: .7; }
+
+/* Открытие: лепестки раскрываются слоями, цветок поворачивается и «приближается». */
+.card.opening .bl-flower .petal { transform: rotate(var(--a)) scale(1); }
+.card.opening .bl-flower .core { transform: scale(1); }
+.card.opening .bl-flower .stamen { opacity: 1; }
+.card.opening .bloom-head { animation: bl-open 2.4s ease forwards; }
+@keyframes bl-open { to { transform: rotate(22deg) scale(1.08); } }
+.card.opening .bud { animation: bl-away 1s ease 1.6s forwards; }
+@keyframes bl-away { to { transform: scale(1.7) translateY(-12%); opacity: 0; } }
+.card.opening :is(.t-bloom .gate .bl-mast, .t-bloom .gate-title, .t-bloom .gate-hint) { opacity: 0; transition: opacity .5s ease; }
+
+/* ---------- Приветствие: обложка журнала ---------- */
+.bl-mast-small { width: 100%; margin-bottom: 30px; }
+.t-bloom .eyebrow { margin-bottom: 14px; font: 600 11px/1.3 var(--font-label); letter-spacing: .3em; text-transform: uppercase; color: var(--accent); opacity: 1; }
+.t-bloom .recipient { font-family: var(--font-head); font-weight: 400; font-size: clamp(58px, 18vw, 100px); line-height: 1.02; color: var(--ink); }
+.bl-sprig { display: block; width: 210px; margin: 26px auto 0; overflow: visible; }
+.bl-sprig .sprig-line { fill: none; stroke: var(--accent2); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 260; stroke-dashoffset: 260; }
+.scene.in .bl-sprig .sprig-line { animation: bl-draw 1.6s ease .4s forwards; }
+@keyframes bl-draw { to { stroke-dashoffset: 0; } }
+.bl-sprig .sprig-leaf { fill: var(--accent2); opacity: 0; }
+.scene.in .bl-sprig .sprig-leaf { animation: bl-fade .6s ease 1.3s forwards; }
+@keyframes bl-fade { to { opacity: .9; } }
+
+/* ---------- Текст: колонка с большой кавычкой ---------- */
+.t-bloom .scene-message .panel { align-items: flex-start; padding: 10px 4px; text-align: left; }
+.bl-quote { height: 58px; margin-bottom: 2px; font: 130px/.82 var(--font-head); color: var(--accent); }
+.t-bloom .message { font-family: var(--font-body); font-size: clamp(21px, 5.6vw, 26px); line-height: 1.55; text-align: left; }
+.t-bloom .message.long { font-size: clamp(18px, 4.8vw, 21px); }
+.t-bloom .signature { align-self: flex-end; text-align: right; }
+.t-bloom .signature span { font: 600 11px/1.4 var(--font-label); letter-spacing: .26em; text-transform: uppercase; }
+.t-bloom .signature b { font-family: var(--font-head); font-size: 34px; color: var(--accent); }
+
+/* ---------- Фото: арки с цветной подложкой ---------- */
+.bl-mini { width: 46px; margin-bottom: 12px; }
+.bl-mini .sf path, .bl-bouquet .sf.c1 path { fill: var(--accent); }
+.bl-mini .sf-core, .bl-bouquet .sf-core { fill: #e9b949; }
+.t-bloom .section-title { font-family: var(--font-head); font-size: clamp(30px, 8.6vw, 40px); }
+.t-bloom .photos figure { position: relative; padding: 0 12px 12px 0; }
+.t-bloom .photos figure::before { content: ''; position: absolute; inset: 12px 0 0 12px; border-radius: 180px 180px 6px 6px; background: var(--bg2); }
+.t-bloom .photos img { position: relative; aspect-ratio: 4 / 5.4; border-radius: 180px 180px 6px 6px; }
+
+/* ---------- Финал: букет ---------- */
+.bl-bouquet { width: 170px; margin-bottom: 8px; }
+.bl-bouquet .b-stem { fill: none; stroke: var(--accent2); stroke-width: 3; stroke-linecap: round; }
+.bl-bouquet .sf.c2 path { fill: var(--accent3); }
+.bl-bouquet .sf.c3 path { fill: color-mix(in srgb, var(--accent) 60%, var(--bg)); }
+.bl-bouquet .b-wrap { fill: color-mix(in srgb, var(--ink) 14%, var(--bg)); }
+.t-bloom .final-thanks { font-family: var(--font-head); font-weight: 400; }
+.t-bloom .thanks { border-radius: 0; background: var(--ink); color: var(--bg); font: 600 13px var(--font-label); letter-spacing: .2em; text-transform: uppercase; }
+.t-bloom .next-btn { font: 600 12px var(--font-label); letter-spacing: .24em; text-transform: uppercase; }

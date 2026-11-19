@@ -16,44 +16,44 @@ test('unused basic code opens a catalog of basic templates', async (t) => {
   const res = await app.request(`/c/${code}`);
   assert.equal(res.status, 200);
   const body = await res.text();
-  assert.equal(catalogTiles(body), 5);
+  assert.equal(catalogTiles(body), 3);
   assert.ok(!body.includes('id="greeting-form"'));
-  assert.ok(!body.includes('template=gold'));
+  assert.ok(!body.includes('template=bloom'));
 });
 
 test('premium code opens all ten templates', async (t) => {
   const { app, repo } = makeContext(t);
-  const body = await (await app.request(`/c/${issueCard(repo, 'gold', 'premcde23456')}`)).text();
-  assert.equal(catalogTiles(body), 10);
-  assert.match(body, /template=envelope/);
+  const body = await (await app.request(`/c/${issueCard(repo, 'bloom', 'premcde23456')}`)).text();
+  assert.equal(catalogTiles(body), 5);
+  assert.match(body, /template=newyear/);
 });
 
 test('choosing a template opens the form for it, the code stays the same', async (t) => {
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
-  const body = await (await app.request(`/c/${code}?template=tulips`)).text();
+  const body = await (await app.request(`/c/${code}?template=birthday`)).text();
   assert.match(body, /id="greeting-form"/);
-  assert.match(body, /data-template="tulips"/);
-  await postForm(app, `/c/${code}`, greetingForm({ templateId: 'tulips' }));
+  assert.match(body, /data-template="birthday"/);
+  await postForm(app, `/c/${code}`, greetingForm({ templateId: 'birthday' }));
   const card = repo.getCard(code);
-  assert.equal(card.templateId, 'tulips');
+  assert.equal(card.templateId, 'birthday');
   assert.equal(card.status, 'draft');
-  assert.match(await (await app.request(`/c/${code}`)).text(), /t-tulips/);
+  assert.match(await (await app.request(`/c/${code}`)).text(), /t-birthday/);
 });
 
 test('basic code cannot use a premium template', async (t) => {
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
-  assert.equal(catalogTiles(await (await app.request(`/c/${code}?template=gold`)).text()), 5);
-  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'gold' }))).status, 400);
+  assert.equal(catalogTiles(await (await app.request(`/c/${code}?template=bloom`)).text()), 3);
+  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'bloom' }))).status, 400);
   assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'nope' }))).status, 400);
   assert.equal(repo.getCard(code).status, 'new');
 });
 
 test('premium code gives five photos on any template', async (t) => {
   const { app, repo } = makeContext(t);
-  const code = issueCard(repo, 'gold', 'premcde23456');
-  const form = greetingForm({ templateId: 'envelope' }, Array(5).fill(JPEG));
+  const code = issueCard(repo, 'bloom', 'premcde23456');
+  const form = greetingForm({ templateId: 'newyear' }, Array(5).fill(JPEG));
   assert.equal((await postForm(app, `/c/${code}`, form)).status, 200);
   assert.equal(repo.getCard(code).photos.length, 5);
 });
@@ -62,23 +62,23 @@ test('template can be changed in a draft but not after activation', async (t) =>
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
   await postForm(app, `/c/${code}`, greetingForm());
-  assert.equal(catalogTiles(await (await app.request(`/c/${code}?pick=1`)).text()), 5);
-  await postForm(app, `/c/${code}`, greetingForm({ templateId: 'night' }));
-  assert.equal(repo.getCard(code).templateId, 'night');
+  assert.equal(catalogTiles(await (await app.request(`/c/${code}?pick=1`)).text()), 3);
+  await postForm(app, `/c/${code}`, greetingForm({ templateId: 'love' }));
+  assert.equal(repo.getCard(code).templateId, 'love');
   await app.request(`/c/${code}/activate`, { method: 'POST' });
-  const body = await (await app.request(`/c/${code}?pick=1&template=tulips`)).text();
+  const body = await (await app.request(`/c/${code}?pick=1&template=birthday`)).text();
   assert.equal(catalogTiles(body), 0);
-  assert.match(body, /t-night/);
+  assert.match(body, /t-love/);
 });
 
 test('an abandoned draft returns to the catalog', async (t) => {
   const { app, repo, storage, clock } = makeContext(t);
   const code = issueCard(repo);
-  await postForm(app, `/c/${code}`, greetingForm({ templateId: 'night' }));
+  await postForm(app, `/c/${code}`, greetingForm({ templateId: 'love' }));
   clock.now += 8 * 24 * 60 * 60 * 1000;
   sweep({ repo, storage, now: clock.now });
   assert.equal(repo.getCard(code).templateId, null);
-  assert.equal(catalogTiles(await (await app.request(`/c/${code}`)).text()), 5);
+  assert.equal(catalogTiles(await (await app.request(`/c/${code}`)).text()), 3);
 });
 
 test('unknown code returns 404', async (t) => {
@@ -140,8 +140,8 @@ test('activation needs a draft, then locks the card for one week', async (t) => 
 
 test('basic template accepts three photos, premium accepts five', async (t) => {
   const { app, repo } = makeContext(t);
-  const basic = issueCard(repo, 'envelope', 'bascccde2345');
-  const premium = issueCard(repo, 'gold', 'premcde23456');
+  const basic = issueCard(repo, 'newyear', 'bascccde2345');
+  const premium = issueCard(repo, 'bloom', 'premcde23456');
   assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, Array(4).fill(JPEG)))).status, 400);
   assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, Array(3).fill(JPEG)))).status, 200);
   assert.equal(repo.getCard(basic).photos.length, 3);
@@ -191,8 +191,8 @@ test('after a week the card and its photos are gone', async (t) => {
 
 test('sweep expires due cards and frees abandoned drafts', async (t) => {
   const { app, repo, storage, clock } = makeContext(t);
-  const active = issueCard(repo, 'envelope', 'actvecde2345');
-  const draft = issueCard(repo, 'envelope', 'draftcde2345');
+  const active = issueCard(repo, 'newyear', 'actvecde2345');
+  const draft = issueCard(repo, 'newyear', 'draftcde2345');
   await postForm(app, `/c/${active}`, greetingForm());
   await app.request(`/c/${active}/activate`, { method: 'POST' });
   await postForm(app, `/c/${draft}`, greetingForm({}, [JPEG]));
@@ -257,7 +257,7 @@ test('final page lets the recipient thank the sender and order the same', async 
 
 test('every template ends with a next button leading to the logo and contacts', async (t) => {
   const { app } = makeContext(t);
-  for (const id of ['envelope', 'tulips', 'night', 'polaroid', 'watercolor', 'gold', 'garden', 'cinema', 'silk', 'ornament']) {
+  for (const id of ['newyear', 'birthday', 'love', 'bloom', 'aurora']) {
     const body = await (await app.request(`/demo/${id}`)).text();
     assert.match(body, /id="to-brand"/, id);
     assert.match(body, /id="brand-page"[^>]*hidden/, id);
@@ -268,43 +268,43 @@ test('every template ends with a next button leading to the logo and contacts', 
 
 test('card styles are inlined and fonts do not hold back the first screen', async (t) => {
   const { app } = makeContext(t);
-  const demo = await (await app.request('/demo/gold')).text();
+  const demo = await (await app.request('/demo/bloom')).text();
   const style = /<style>([\s\S]*?)<\/style>/.exec(demo)?.[1] ?? '';
   assert.ok(style.includes(readFileSync(new URL('../raiko/assets/css/card-base.css', import.meta.url), 'utf8')));
-  assert.ok(style.includes(readFileSync(new URL('../raiko/assets/css/gold.css', import.meta.url), 'utf8')));
+  assert.ok(style.includes(readFileSync(new URL('../raiko/assets/css/bloom.css', import.meta.url), 'utf8')));
   assert.doesNotMatch(demo, /<link rel="stylesheet" href="\/static\/design\/css/);
   assert.match(demo, /<link id="card-fonts" rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+" media="print">/);
-  assert.match(demo, /class="card t-gold fonts-wait"/);
+  assert.match(demo, /class="card t-bloom tone-light pal-peony fonts-wait"/);
 });
 
 test('styles and scripts carry a content version so caches refresh after a release', async (t) => {
   const { app, repo } = makeContext(t);
-  const demo = await (await app.request('/demo/gold')).text();
+  const demo = await (await app.request('/demo/bloom')).text();
   assert.match(demo, /\/static\/design\/js\/card\.js\?v=[a-f0-9]{10}/);
-  assert.match(await (await app.request(`/c/${issueCard(repo)}?template=envelope`)).text(), /js\/form\.js\?v=[a-f0-9]{10}/);
+  assert.match(await (await app.request(`/c/${issueCard(repo)}?template=newyear`)).text(), /js\/form\.js\?v=[a-f0-9]{10}/);
 });
 
 test('template styles and demo photos are served from the designer folder', async (t) => {
   const { app } = makeContext(t);
-  const css = await app.request('/static/design/css/gold.css');
+  const css = await app.request('/static/design/css/bloom.css');
   assert.equal(css.status, 200);
   assert.match(css.headers.get('cache-control'), /max-age=/);
   assert.equal((await app.request('/static/design/css/card-base.css')).status, 200);
   assert.equal((await app.request('/static/design/demo/1.svg')).status, 200);
   assert.equal((await app.request('/static/design/js/card.js')).status, 200);
   assert.equal((await app.request('/static/design/../templates.js')).status, 404);
-  assert.match(await (await app.request('/demo/gold')).text(), /\/static\/design\/demo\/1\.svg/);
+  assert.match(await (await app.request('/demo/bloom')).text(), /\/static\/design\/demo\/1\.svg/);
 });
 
 test('a broken template description is reported in plain words', () => {
-  const good = { ...getTemplate('gold'), id: 'gold-copy' };
-  assert.deepEqual(designProblems(getTemplate('gold')), []);
-  const problems = designProblems({ ...good, id: 'new-one', tier: 'vip', fx: 'rain', accent: 'red' });
+  const good = { ...getTemplate('bloom'), id: 'gold-copy' };
+  assert.deepEqual(designProblems(getTemplate('bloom')), []);
+  const problems = designProblems({ ...good, id: 'new-one', tier: 'vip', fx: 'rain', palettes: [{ ...good.palettes[0], accent: 'red' }] });
   assert.ok(problems.some((p) => p.includes('raiko/assets/css/new-one.css')));
   assert.ok(problems.some((p) => p.includes('tier')));
   assert.ok(problems.some((p) => p.includes('fx')));
   assert.ok(problems.some((p) => p.includes('#rrggbb')));
-  assert.ok(designProblems(getTemplate('gold'), new Set(['gold'])).some((p) => p.includes('уже есть')));
+  assert.ok(designProblems(getTemplate('bloom'), new Set(['bloom'])).some((p) => p.includes('уже есть')));
 });
 
 test('brand favicon is served', async (t) => {
@@ -316,7 +316,7 @@ test('brand favicon is served', async (t) => {
 
 test('form offers ready-made Kazakh greetings', async (t) => {
   const { app, repo } = makeContext(t);
-  assert.match(await (await app.request(`/c/${issueCard(repo)}?template=envelope`)).text(), /Туған күн/);
+  assert.match(await (await app.request(`/c/${issueCard(repo)}?template=newyear`)).text(), /Туған күн/);
 });
 
 test('text responses are gzipped and static files are cached', async (t) => {
@@ -336,7 +336,7 @@ test('photo route rejects path tricks', async (t) => {
 
 test('demo pages exist for all ten templates and pages are not indexed', async (t) => {
   const { app } = makeContext(t);
-  const ids = ['envelope', 'tulips', 'night', 'polaroid', 'watercolor', 'gold', 'garden', 'cinema', 'silk', 'ornament'];
+  const ids = ['newyear', 'birthday', 'love', 'bloom', 'aurora'];
   for (const id of ids) {
     const res = await app.request(`/demo/${id}`);
     assert.equal(res.status, 200, id);
@@ -347,8 +347,8 @@ test('demo pages exist for all ten templates and pages are not indexed', async (
 
 test('form offers ready texts per occasion in two languages, premium gets its own set', async (t) => {
   const { app, repo } = makeContext(t);
-  const basicForm = await (await app.request(`/c/${issueCard(repo, 'envelope', 'bascccde2345')}?template=envelope`)).text();
-  const premiumForm = await (await app.request(`/c/${issueCard(repo, 'gold', 'premcde23456')}?template=gold`)).text();
+  const basicForm = await (await app.request(`/c/${issueCard(repo, 'newyear', 'bascccde2345')}?template=newyear`)).text();
+  const premiumForm = await (await app.request(`/c/${issueCard(repo, 'bloom', 'premcde23456')}?template=bloom`)).text();
   const [basicBirthday] = occasionsForTier('basic')[0].texts.ru;
   const [premiumBirthday] = occasionsForTier('premium')[0].texts.ru;
   const escape = (text) => text.replaceAll('"', '&quot;').replaceAll("'", '&#39;');

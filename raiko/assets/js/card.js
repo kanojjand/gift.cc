@@ -52,16 +52,30 @@
     audio.play().then(fadeInMusic).catch(() => setMuted(true));
   }
 
-  function createParticle(kind, width, height, scatter) {
-    const particle = {
+  /* Частицы, которые поднимаются снизу вверх, а не падают. */
+  const RISING = new Set(['gold', 'hearts']);
+
+  function createParticle(kind, width, height, scatter, colors) {
+    return {
       x: Math.random() * width,
-      y: scatter ? Math.random() * height : kind === 'gold' ? height + 10 : -20,
+      y: scatter ? Math.random() * height : RISING.has(kind) ? height + 20 : -20,
       size: Math.random(),
       drift: Math.random() * Math.PI * 2,
       spin: Math.random() * Math.PI * 2,
       phase: Math.random() * Math.PI * 2,
+      vx: 0,
+      vy: 0,
+      color: colors[Math.floor(Math.random() * colors.length)],
     };
-    return particle;
+  }
+
+  /* Сердечко с центром в 0,0 размером примерно 2×2 единицы. */
+  function heartPath(ctx) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0.9);
+    ctx.bezierCurveTo(-1.6, -0.2, -0.9, -1.5, 0, -0.6);
+    ctx.bezierCurveTo(0.9, -1.5, 1.6, -0.2, 0, 0.9);
+    ctx.fill();
   }
 
   const PAINTERS = {
@@ -95,17 +109,87 @@
       ctx.fill();
       return true;
     },
+    snow(ctx, p, t, height) {
+      p.y += 0.35 + p.size * 1.1;
+      p.x += Math.sin(t / 1700 + p.drift) * (0.3 + p.size * 0.5);
+      ctx.globalAlpha = 0.35 + p.size * 0.6;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1 + p.size * 2.8, 0, Math.PI * 2);
+      ctx.fill();
+      return p.y < height + 10;
+    },
+    confetti(ctx, p, t, height) {
+      if (p.burst) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.16;
+        p.vx *= 0.985;
+      } else {
+        p.y += 0.9 + p.size * 1.3;
+        p.x += Math.sin(t / 800 + p.drift) * 0.8;
+      }
+      p.spin += 0.09 + p.size * 0.05;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.spin);
+      ctx.scale(1, Math.cos(p.spin * 1.7));
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.95;
+      ctx.fillRect(-4 - p.size * 3, -2.5 - p.size * 2, 8 + p.size * 6, 5 + p.size * 4);
+      ctx.restore();
+      return p.y < height + 30;
+    },
+    hearts(ctx, p, t) {
+      if (p.burst) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy -= 0.02;
+        p.vx *= 0.97;
+      } else {
+        p.y -= 0.45 + p.size * 0.8;
+        p.x += Math.sin(t / 1100 + p.drift) * 0.6;
+      }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(Math.sin(t / 900 + p.phase) * 0.35);
+      ctx.scale(5 + p.size * 8, 5 + p.size * 8);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.35 + p.size * 0.5;
+      heartPath(ctx);
+      ctx.restore();
+      return p.y > -40;
+    },
+    sparkle(ctx, p, t) {
+      const glow = Math.abs(Math.sin(t / 1300 + p.phase));
+      const radius = (1.5 + p.size * 5) * (0.4 + glow * 0.6);
+      ctx.globalAlpha = 0.25 + glow * 0.75;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - radius);
+      ctx.quadraticCurveTo(p.x, p.y, p.x + radius, p.y);
+      ctx.quadraticCurveTo(p.x, p.y, p.x, p.y + radius);
+      ctx.quadraticCurveTo(p.x, p.y, p.x - radius, p.y);
+      ctx.quadraticCurveTo(p.x, p.y, p.x, p.y - radius);
+      ctx.fill();
+      return true;
+    },
   };
 
-  const PARTICLE_COUNT = { petals: 22, gold: 46, stars: 70 };
+  const PARTICLE_COUNT = { petals: 22, gold: 46, stars: 70, snow: 90, confetti: 22, hearts: 14, sparkle: 46 };
+  const BURST_COUNT = { confetti: 150, hearts: 40 };
+  /* Через сколько миллисекунд после нажатия взрывается конфетти или сердца: синхронно с анимацией первого экрана. */
+  const BURST_DELAY_MS = { confetti: 620, hearts: 1250 };
+
+  const cssVar = (name) => getComputedStyle(card).getPropertyValue(name).trim();
 
   function startEffects() {
     const kind = card.dataset.fx;
     const paint = PAINTERS[kind];
     const canvas = card.querySelector('.fx');
-    if (!paint || !canvas || reduceMotion) return;
+    if (!paint || !canvas || reduceMotion) return null;
     const ctx = canvas.getContext('2d');
-    const color = getComputedStyle(document.documentElement).getPropertyValue('--fx-color').trim();
+    const color = cssVar('--fx-color');
+    const colors = ['--accent', '--accent2', '--accent3'].map(cssVar).filter(Boolean);
+    const particleColors = colors.length ? colors : [color];
     let width = 0;
     let height = 0;
 
@@ -120,18 +204,56 @@
     resize();
     window.addEventListener('resize', resize);
 
-    let particles = Array.from({ length: PARTICLE_COUNT[kind] }, () => createParticle(kind, width, height, true));
+    const spawn = (scatter) => createParticle(kind, width, height, scatter, particleColors);
+    let particles = Array.from({ length: PARTICLE_COUNT[kind] }, () => spawn(true));
 
     function frame(time) {
       if (!document.hidden) {
         ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = color;
-        particles = particles.map((p) => (paint(ctx, p, time, height) ? p : createParticle(kind, width, height, false)));
+        /* Частицы взрыва живут один раз, обычные возвращаются в начало пути. */
+        particles = particles.flatMap((p) => {
+          if (paint(ctx, p, time, height)) return [p];
+          return p.burst ? [] : [spawn(false)];
+        });
         ctx.globalAlpha = 1;
       }
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+
+    /* Взрыв частиц из точки x, y: конфетти из подарка, сердца из замка, конфетти над тортом. */
+    function burst(x, y) {
+      const count = BURST_COUNT[kind] ?? 0;
+      const added = Array.from({ length: count }, () => {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = kind === 'hearts' ? 1 + Math.random() * 3 : 3 + Math.random() * 9;
+        return { ...spawn(false), x, y, burst: true, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - (kind === 'hearts' ? 1.5 : 5) };
+      });
+      particles = [...particles, ...added];
+    }
+    return { burst };
+  }
+
+  let effects = null;
+
+  function burstFrom(element) {
+    if (!effects || !element) return;
+    const box = element.getBoundingClientRect();
+    effects.burst(box.left + box.width / 2, box.top + box.height / 2);
+  }
+
+  /* Торт в конце «Сюрприза»: касание задувает свечи, сыплется конфетти, фраза меняется. */
+  function setupCake() {
+    const cake = card.querySelector('.cake');
+    if (!cake) return;
+    cake.addEventListener('click', () => {
+      if (card.classList.contains('blown')) return;
+      card.classList.add('blown');
+      burstFrom(cake.querySelector('.candles'));
+      const line = card.querySelector('.final-thanks');
+      if (line && cake.dataset.done) line.textContent = cake.dataset.done;
+    });
   }
 
   function observeScenes() {
@@ -186,7 +308,9 @@
     if (card.dataset.track === '1') navigator.sendBeacon(`/c/${card.dataset.code}/opened`);
     loadBrandFonts();
     startMusic();
-    startEffects();
+    effects = startEffects();
+    const burstDelay = BURST_DELAY_MS[card.dataset.fx];
+    if (effects && burstDelay !== undefined) setTimeout(() => burstFrom(card.querySelector('.gate-btn')), burstDelay);
     observeScenes();
     setTimeout(() => {
       card.classList.add('opened');
@@ -256,6 +380,7 @@
   fontCssLoaded.then(fitRecipientName).catch((error) => console.warn('[card] не удалось подогнать имя', error));
   splitMessageIntoWords();
   setupPhotoDots();
+  setupCake();
   card.querySelector('.gate-btn')?.addEventListener('click', open);
 
   if (audio) {

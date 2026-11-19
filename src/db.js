@@ -46,7 +46,14 @@ export function openDb(path) {
   db.exec(SCHEMA);
   addOpenTracking(db);
   addTiers(db);
+  addPalette(db);
   return db;
+}
+
+/** Цветовая палитра, которую покупатель выбрал в шаблоне. У старых открыток её нет: NULL. */
+function addPalette(db) {
+  const columns = new Set(db.prepare('PRAGMA table_info(cards)').all().map((column) => column.name));
+  if (!columns.has('palette')) db.exec('ALTER TABLE cards ADD COLUMN palette TEXT');
 }
 
 /** Раньше шаблон закреплялся за кодом при выпуске. Теперь у кода только тип, а неиспользованные коды снова открывают каталог. */
@@ -76,6 +83,7 @@ function toCard(row) {
     code: row.code,
     batchId: row.batch_id,
     templateId: row.template_id || null,
+    palette: row.palette ?? null,
     tier: row.tier,
     status: row.status,
     sender: row.sender,
@@ -174,13 +182,13 @@ export function createRepo(db) {
       return toCard(db.prepare('SELECT * FROM cards WHERE code = ?').get(code));
     },
 
-    saveDraft(code, { templateId, sender, recipient, message, songId, photos }, now) {
+    saveDraft(code, { templateId, palette = null, sender, recipient, message, songId, photos }, now) {
       const { changes } = db
         .prepare(
-          `UPDATE cards SET status = 'draft', template_id = ?, sender = ?, recipient = ?, message = ?, song_id = ?, photos = ?, updated_at = ?
+          `UPDATE cards SET status = 'draft', template_id = ?, palette = ?, sender = ?, recipient = ?, message = ?, song_id = ?, photos = ?, updated_at = ?
            WHERE code = ? AND status IN ('new', 'draft')`,
         )
-        .run(templateId, sender, recipient, message, songId, JSON.stringify(photos), now, code);
+        .run(templateId, palette, sender, recipient, message, songId, JSON.stringify(photos), now, code);
       return changes === 1;
     },
 
