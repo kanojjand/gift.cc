@@ -1,7 +1,9 @@
 (() => {
   const MAX_SIDE = 1280;
   const JPEG_QUALITY = 0.76;
-  const TEXT_FIELDS = ['sender', 'recipient', 'message'];
+  const TEXT_FIELDS = ['sender', 'recipient', 'message', 'musicLink', 'musicStartMin', 'musicStartSec'];
+  const MUSIC_CHECK_DELAY_MS = 350;
+  const PLAYER_PERMISSIONS = 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write';
 
   const form = document.getElementById('greeting-form');
   const list = document.getElementById('photo-list');
@@ -196,7 +198,7 @@
   function buildPayload() {
     const payload = new FormData();
     payload.append('templateId', form.dataset.template);
-    ['sender', 'recipient', 'message'].forEach((name) => payload.append(name, form.elements[name].value));
+    TEXT_FIELDS.forEach((name) => payload.append(name, form.elements[name]?.value ?? ''));
     const song = form.querySelector('input[name="songId"]:checked');
     if (song) payload.append('songId', song.value);
     const palette = form.querySelector('input[name="palette"]:checked');
@@ -291,6 +293,80 @@
     saveText();
     updateCounter();
   });
+
+  /* Песня по ссылке: сразу пишем, узнали ли ссылку, и показываем сам плеер, чтобы покупатель проверил, что песня включается. */
+  function showPlayer(box, music) {
+    if (!music) {
+      box.hidden = true;
+      box.replaceChildren();
+      return;
+    }
+    if (box.querySelector('iframe')?.src === music.src) return;
+    const frame = document.createElement('iframe');
+    frame.src = music.src;
+    frame.title = `Песня, ${music.name}`;
+    frame.allow = PLAYER_PERMISSIONS;
+    frame.referrerPolicy = 'strict-origin';
+    box.dataset.service = music.service;
+    box.style.setProperty('--player-h', music.height ? `${music.height}px` : '');
+    box.replaceChildren(frame);
+    box.hidden = false;
+  }
+
+  function musicStatusText(text, music, errorText) {
+    if (!text) return '';
+    if (!music) return errorText;
+    if (music.canStart) return `✓ ${music.name}: песня сыграет целиком. Ниже можно выбрать, с какого момента она начнётся.`;
+    return `✓ ${music.name}. Без подписки у получателя обычно играет только отрывок около 30 секунд, и момент выбрать нельзя. Целиком и с нужного места песня играет из YouTube.`;
+  }
+
+  const startInputs = () => ['musicStartMin', 'musicStartSec'].map((name) => form.elements[name]);
+
+  /* Время из ссылки (YouTube «Поделиться → Начало 1:05») переносим в поля. Другая песня — поля сбрасываются.
+     При первой проверке набранное раньше не трогаем: страницу могли перезагрузить посреди заполнения. */
+  function syncStartFields(state, parsed, lib) {
+    const key = parsed && lib.musicEmbed(parsed).canStart ? `${parsed.id}:${parsed.start}` : null;
+    if (key === state.lastKey) return;
+    const firstCheck = state.lastKey === undefined;
+    state.lastKey = key;
+    const [minutes, seconds] = startInputs();
+    if (!key || (firstCheck && (minutes.value || seconds.value))) return;
+    const parts = lib.startParts(parsed.start);
+    minutes.value = parts.minutes;
+    seconds.value = parts.seconds;
+  }
+
+  function setupMusicLink(field) {
+    const status = document.getElementById('music-status');
+    const box = document.getElementById('music-preview');
+    const startBox = document.getElementById('music-start');
+    const startError = startBox.querySelector('[data-error="musicStart"]');
+    const state = { lastKey: undefined };
+    let timer = null;
+    import(field.dataset.module).then((lib) => {
+      const check = () => {
+        const text = field.value.trim();
+        const parsed = lib.parseMusicLink(text);
+        syncStartFields(state, parsed, lib);
+        const start = lib.readStartTime(...startInputs().map((input) => input.value));
+        const music = lib.musicEmbed(start === null ? parsed : lib.withStart(parsed, start));
+        status.className = `music-status${music ? (music.fullTrack ? ' ok' : ' warn') : text ? ' bad' : ''}`;
+        status.textContent = musicStatusText(text, music, lib.MUSIC_LINK_ERROR);
+        startBox.hidden = !music?.canStart;
+        startError.textContent = music?.canStart && start === null ? lib.MUSIC_START_ERROR : '';
+        showPlayer(box, music);
+      };
+      const checkLater = () => {
+        clearTimeout(timer);
+        timer = setTimeout(check, MUSIC_CHECK_DELAY_MS);
+      };
+      [field, ...startInputs()].forEach((input) => input.addEventListener('input', checkLater));
+      check();
+    }).catch((error) => console.warn('[form] проверка ссылки на песню недоступна, её проверит сервер', error));
+  }
+
+  const musicField = document.getElementById('music-link');
+  if (musicField) setupMusicLink(musicField);
 
   updateCounter();
   updateAddTile();

@@ -7,6 +7,7 @@ import { sweep } from '../sweep.js';
 import { getPalette, getTemplate, getTier, isPaletteAllowed, isTemplateAllowed, MAX_PHOTOS_ANY, templatesForTier } from '../tiers.js';
 import { isJpeg, isValidCode, isValidPhotoName, isValidSongFile, validateGreeting } from '../validation.js';
 import { renderCard } from '../../raiko/card.js';
+import { canonicalLink, MUSIC_LINK_ERROR, MUSIC_START_ERROR, musicEmbed, parseMusicLink, readStartTime, withStart } from '../../public/js/music-link.js';
 import { occasionsForTier } from '../texts.js';
 import { renderCatalog } from '../views/catalog.js';
 import { renderForm } from '../views/form.js';
@@ -33,6 +34,23 @@ function selectSong(repo, template, rawId) {
   if (!rawId) return { ok: true, songId: null };
   const song = repo.getSong(Number(rawId));
   return song && song.templateId === template.id ? { ok: true, songId: song.id } : { ok: false };
+}
+
+/**
+ * Ссылка на песню из формы: пустая — без песни, незнакомая — ошибка, иначе чистая ссылка для базы.
+ * Поля «мин» и «сек» задают момент начала и важнее времени в самой ссылке; если формы без них (старая страница),
+ * остаётся время из ссылки. Сервисам, которые не умеют начинать с середины, момент не нужен.
+ */
+function readMusicLink(form) {
+  const raw = form.get('musicLink');
+  const text = typeof raw === 'string' ? raw.trim() : '';
+  if (!text) return { ok: true, link: null };
+  const music = parseMusicLink(text);
+  if (!music) return { ok: false, error: MUSIC_LINK_ERROR, errors: { musicLink: MUSIC_LINK_ERROR } };
+  if (!form.has('musicStartMin') && !form.has('musicStartSec')) return { ok: true, link: canonicalLink(music) };
+  const start = readStartTime(form.get('musicStartMin'), form.get('musicStartSec'));
+  if (start === null && musicEmbed(music).canStart) return { ok: false, error: MUSIC_START_ERROR, errors: { musicStart: MUSIC_START_ERROR } };
+  return { ok: true, link: canonicalLink(start === null ? music : withStart(music, start)) };
 }
 
 /** Палитра из формы. Если страница формы старая и палитру не прислала, берётся первая. */
@@ -96,6 +114,7 @@ export function publicRoutes({ repo, storage, now, config }) {
 
   const showCard = (c, card, mode, extra = {}) => {
     const template = getTemplate(card.templateId);
+    const music = musicEmbed(parseMusicLink(card.musicLink));
     return c.html(
       renderCard({
         template,
@@ -104,7 +123,8 @@ export function publicRoutes({ repo, storage, now, config }) {
         recipient: card.recipient,
         message: card.message,
         photoUrls: card.photos.map((name) => `/media/p/${card.code}/${name}`),
-        songUrl: songUrlOf(card),
+        music,
+        songUrl: music ? null : songUrlOf(card),
         mode,
         code: card.code,
         today: now(),
@@ -183,6 +203,8 @@ export function publicRoutes({ repo, storage, now, config }) {
       if (!greeting.ok) return fail(c, 400, 'Проверьте поля формы', greeting.errors);
       const song = selectSong(repo, template, form.get('songId'));
       if (!song.ok) return fail(c, 400, 'Такой мелодии нет у этого шаблона');
+      const music = readMusicLink(form);
+      if (!music.ok) return fail(c, 400, music.error, music.errors);
       const photos = collectPhotos(form, card);
       if (photos.error) return fail(c, 400, photos.error);
       const buffers = await readJpegs(photos.files);
@@ -192,7 +214,7 @@ export function publicRoutes({ repo, storage, now, config }) {
 
       const added = buffers.map((buffer) => storage.savePhoto(card.code, buffer));
       const finalPhotos = [...photos.keep, ...added];
-      const draft = { ...greeting.value, templateId: template.id, palette: palette.palette, songId: song.songId, photos: finalPhotos };
+      const draft = { ...greeting.value, templateId: template.id, palette: palette.palette, songId: music.link ? null : song.songId, musicLink: music.link, photos: finalPhotos };
       if (!repo.saveDraft(card.code, draft, now())) {
         storage.prunePhotos(card.code, repo.getCard(card.code).photos);
         return fail(c, 409, 'Открытка уже активирована');

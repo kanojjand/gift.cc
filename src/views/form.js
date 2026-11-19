@@ -3,6 +3,7 @@ import { asset } from './assets.js';
 import { html } from './html.js';
 import { brandFonts, brandLockup, documentPage } from './pages.js';
 import { occasionsForTier, suggestedOccasion, TEXT_LANGS } from '../texts.js';
+import { MUSIC_LINK_MAX_LENGTH, musicEmbed, parseMusicLink, startParts } from '../../public/js/music-link.js';
 
 const LANG_LABELS = Object.freeze({ ru: 'Рус', kk: 'Қаз' });
 const STEPS = ['Шаблон', 'Текст и фото', 'Проверка'];
@@ -96,11 +97,46 @@ function photoField(maxPhotos, card) {
   </fieldset>`;
 }
 
+/**
+ * Песня по ссылке: покупатель сам выбирает её в YouTube, Spotify, Apple Music или Яндекс Музыке,
+ * играет официальный плеер сервиса. Форма сразу показывает, узнала ли она ссылку, и сам плеер.
+ */
+/** Момент, с которого начнётся песня. Виден только для YouTube: остальные без подписки играют свой отрывок. */
+function musicStart(card) {
+  const music = parseMusicLink(card.musicLink);
+  const canStart = Boolean(musicEmbed(music)?.canStart);
+  const { minutes, seconds } = startParts(canStart ? music.start : 0);
+  return html`<div id="music-start" class="music-start" ${canStart ? '' : 'hidden'}>
+    <div class="music-start-row">
+      <span>Начать с</span>
+      <input class="start-num" name="musicStartMin" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="0" value="${minutes}" aria-label="Минуты">
+      <span>мин</span>
+      <input class="start-num" name="musicStartSec" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="00" value="${seconds}" aria-label="Секунды">
+      <span>сек</span>
+    </div>
+    <p class="field-hint">Например, с припева. Пусто — с самого начала. Нажмите ▶ в плеере ниже и проверьте.</p>
+    <em class="field-error" data-error="musicStart"></em>
+  </div>`;
+}
+
+function musicField(card) {
+  return html`<div class="field music-field">
+    <label for="music-link">Песня (по желанию)</label>
+    <p class="field-hint">Найдите песню в YouTube, Spotify, Apple Music или Яндекс Музыке, нажмите «Поделиться» → «Копировать ссылку» и вставьте сюда.</p>
+    <input id="music-link" name="musicLink" type="url" inputmode="url" maxlength="${MUSIC_LINK_MAX_LENGTH}" autocomplete="off" placeholder="https://youtu.be/…" value="${card.musicLink ?? ''}" data-module="${asset('js/music-link.js')}">
+    <p id="music-status" class="music-status" aria-live="polite"></p>
+    ${musicStart(card)}
+    <div id="music-preview" class="music-preview" hidden></div>
+    <em class="field-error" data-error="musicLink"></em>
+  </div>`;
+}
+
 function songField(songs, card) {
   if (songs.length === 0) return '';
   const selected = card.templateId === songs[0].templateId ? card.songId : songs[0].id;
   return html`<fieldset class="field">
-    <legend>Музыка</legend>
+    <legend>Или мелодия шаблона</legend>
+    <p class="field-hint">Если вставили ссылку на песню, играть будет она.</p>
     <div class="song-list">
       ${songs.map((song) => html`<label class="song">
         <input type="radio" name="songId" value="${song.id}" ${song.id === selected ? 'checked' : ''}>
@@ -164,6 +200,7 @@ export function renderForm({ card, template, songs, maxPhotos, today = Date.now(
           <input name="sender" maxlength="${LIMITS.senderLength}" autocomplete="off" required value="${card.sender ?? ''}" placeholder="Ваше имя">
           <em class="field-error" data-error="sender"></em></label>
         ${photoField(maxPhotos, card)}
+        ${musicField(card)}
         ${songField(songs, card)}
         <p id="form-error" class="form-error" role="alert"></p>
         <button id="submit" class="ui-btn wide" type="submit">Посмотреть открытку</button>

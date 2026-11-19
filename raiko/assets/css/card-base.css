@@ -69,6 +69,26 @@ img { display: block; max-width: 100%; }
 .photos figure { flex: 0 0 min(78%, 360px); margin: 0; scroll-snap-align: center; }
 .photos img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .swipe-hint { margin: 18px 0 0; font-size: 16px; opacity: .65; }
+
+/* Экран песни: официальный плеер сервиса в рамке цвета шаблона. Высоту плеера задаёт переменная --player-h. */
+.scene-song .eyebrow { margin-bottom: 18px; }
+.song-player {
+  position: relative; width: 100%; max-width: 440px; border-radius: 18px; overflow: hidden;
+  background: rgba(255, 255, 255, .06); background: color-mix(in srgb, var(--ink, #fff) 8%, transparent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 22px 50px -24px rgba(0, 0, 0, .7);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, currentColor) 45%, transparent), 0 22px 50px -24px rgba(0, 0, 0, .7);
+}
+.song-player iframe { display: block; width: 100%; height: var(--player-h, 180px); border: 0; }
+.song-player[data-service="youtube"] iframe { height: auto; aspect-ratio: 16 / 9; min-height: 200px; }
+.song-hint { margin: 18px 0 0; font-size: 16px; opacity: .7; }
+.song-demo {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 22px; box-shadow: none;
+  border: 1.5px dashed currentColor; border-color: color-mix(in srgb, var(--accent, currentColor) 60%, transparent);
+  background: color-mix(in srgb, var(--accent, currentColor) 7%, transparent);
+}
+.song-demo-note { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 6px; border-radius: 50%; background: var(--accent); color: var(--bg); font-size: 26px; line-height: 1; }
+.song-demo b { font-size: 20px; font-weight: 600; line-height: 1.25; }
+.song-demo small { font-size: 14px; line-height: 1.4; opacity: .7; }
 .photo-dots { display: flex; justify-content: center; gap: 9px; margin-top: 16px; }
 .photo-dots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .3; transition: opacity .25s ease, transform .25s ease; }
 .photo-dots i.on { opacity: 1; transform: scale(1.35); background: var(--accent); }

@@ -35,6 +35,39 @@ function photoScene(template, photoUrls, decorData) {
   </section>`;
 }
 
+const SONG_LABEL = 'Эта песня — для тебя';
+const PLAYER_PERMISSIONS = 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write';
+
+/**
+ * Песня, которую выбрал отправитель, в официальном плеере сервиса. Плеер нельзя прятать: человек сам жмёт ▶,
+ * и музыка играет, пока он листает дальше. В демо на этом месте заглушка.
+ * Подпись над плеером можно задать шаблону в labels.song.
+ */
+function songScene(template, music, mode) {
+  if (!music && mode !== 'demo') return '';
+  return html`<section class="scene scene-song">
+    <div class="panel">
+      <p class="eyebrow reveal">${template.labels.song ?? SONG_LABEL}</p>
+      ${music ? songPlayer(music) : songPlaceholder()}
+      ${music ? html`<p class="song-hint reveal">Нажми ▶ и листай дальше — песня будет играть</p>` : ''}
+    </div>
+  </section>`;
+}
+
+function songPlayer(music) {
+  return html`<div class="song-player reveal" data-service="${music.service}" style="${music.height ? `--player-h:${music.height}px` : ''}">
+    <iframe src="${music.src}" title="Песня в открытке, ${music.name}" loading="lazy" allow="${PLAYER_PERMISSIONS}" referrerpolicy="strict-origin"></iframe>
+  </div>`;
+}
+
+function songPlaceholder() {
+  return html`<div class="song-player song-demo reveal">
+    <span class="song-demo-note" aria-hidden="true">♪</span>
+    <b>Здесь будет ваша песня</b>
+    <small>Ссылка из YouTube, Spotify, Apple Music или Яндекс Музыки</small>
+  </div>`;
+}
+
 function closingScene(templateId, sender, decorData) {
   const thanksText = encodeURIComponent(`${sender}, спасибо за поздравление! Мне очень приятно.`);
   return html`<section class="scene scene-closing"><div class="panel">
@@ -122,11 +155,11 @@ function demoBar(template, palette, choice) {
 }
 
 /**
- * @param {{ template: object, palette?: object | null, sender: string, recipient: string, message: string, photoUrls: string[],
+ * @param {{ template: object, palette?: object | null, music?: object | null, sender: string, recipient: string, message: string, photoUrls: string[],
  *   songUrl: string | null, mode: 'live' | 'draft' | 'demo', code?: string, activatedNotice?: boolean, expiresAt?: number,
  *   today?: number, choice?: { href: string, back: string, code: string } | null }} card
  */
-export function renderCard({ template, palette = null, sender, recipient, message, photoUrls, songUrl, mode, code, activatedNotice, expiresAt, today = Date.now(), choice = null }) {
+export function renderCard({ template, palette = null, music = null, sender, recipient, message, photoUrls, songUrl, mode, code, activatedNotice, expiresAt, today = Date.now(), choice = null }) {
   const decorData = { initial: initialOf(recipient), senderInitial: initialOf(sender), recipient, sender, year: newYearOf(today) };
   const gate = renderGate(template.id, { ...decorData, firstPhoto: photoUrls[0] ?? null });
   const longClass = [...message].length > LONG_MESSAGE_CHARS ? 'long' : '';
@@ -157,6 +190,7 @@ export function renderCard({ template, palette = null, sender, recipient, messag
           </div>
           <p class="scroll-hint reveal">Листай вниз</p>
         </section>
+        ${songScene(template, music, mode)}
         <section class="scene scene-message">
           <div class="panel">
             ${renderSceneDecor(template.id, 'message', decorData)}

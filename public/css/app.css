@@ -118,6 +118,20 @@ textarea { resize: vertical; line-height: 1.5; }
 @media (hover: hover) { .chip:hover { border-color: #fff; } }
 
 .field-hint { margin: -2px 0 12px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.music-status { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.music-status:empty { display: none; }
+.music-status.ok { color: #9be3a8; }
+.music-status.warn { color: #e8cf8f; }
+.music-status.bad { color: var(--danger); }
+/* Ошибку уже показывает проверка на месте, второй раз под полем её не дублируем. */
+.music-status.bad ~ .field-error { display: none; }
+.music-start { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.music-start-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; }
+.music-start-row input.start-num { width: 64px; min-height: 44px; padding: 8px; text-align: center; font-variant-numeric: tabular-nums; }
+.music-start .field-hint { margin: 8px 0 0; font-size: 13px; }
+.music-preview { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+.music-preview iframe { display: block; width: 100%; height: var(--player-h, 180px); border: 0; }
+.music-preview[data-service="youtube"] iframe { height: auto; aspect-ratio: 16 / 9; min-height: 200px; }
 .text-picker { --tp-accent: #fff; margin: 0 0 12px; padding: 14px 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .text-picker.is-premium { --tp-accent: #e8cf8f; border-color: rgba(232, 207, 143, .32); background: linear-gradient(180deg, rgba(232, 207, 143, .07), rgba(232, 207, 143, 0) 120px), var(--card); }
 .tp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

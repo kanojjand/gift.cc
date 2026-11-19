@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { getConnInfo } from '@hono/node-server/conninfo';
+import { MUSIC_FRAME_ORIGINS } from '../public/js/music-link.js';
 
 const MAX_TRACKED_KEYS = 20000;
 const IPV6_GROUPS = 8;
@@ -89,6 +90,8 @@ const CONTENT_SECURITY_POLICY = [
   "img-src 'self' data: blob:",
   "media-src 'self'",
   "connect-src 'self'",
+  /* Официальные плееры песен, которые покупатель выбрал сам. */
+  `frame-src ${MUSIC_FRAME_ORIGINS.join(' ')}`,
   "frame-ancestors 'none'",
   "base-uri 'none'",
   "form-action 'self'",

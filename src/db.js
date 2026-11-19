@@ -38,7 +38,7 @@ const SCHEMA = `
 `;
 
 const LEGACY_PREMIUM_TEMPLATES = `'gold', 'garden', 'cinema', 'silk', 'ornament'`;
-const WIPE_CONTENT =`sender = NULL, recipient = NULL, message = NULL, song_id = NULL, photos = '[]'`;
+const WIPE_CONTENT = `sender = NULL, recipient = NULL, message = NULL, song_id = NULL, music_link = NULL, photos = '[]'`;
 
 export function openDb(path) {
   const db = new DatabaseSync(path);
@@ -47,6 +47,7 @@ export function openDb(path) {
   addOpenTracking(db);
   addTiers(db);
   addPalette(db);
+  addMusicLink(db);
   return db;
 }
 
@@ -54,6 +55,12 @@ export function openDb(path) {
 function addPalette(db) {
   const columns = new Set(db.prepare('PRAGMA table_info(cards)').all().map((column) => column.name));
   if (!columns.has('palette')) db.exec('ALTER TABLE cards ADD COLUMN palette TEXT');
+}
+
+/** Ссылка на песню в YouTube, Spotify, Apple Music или Яндекс Музыке, которую покупатель вставил сам. */
+function addMusicLink(db) {
+  const columns = new Set(db.prepare('PRAGMA table_info(cards)').all().map((column) => column.name));
+  if (!columns.has('music_link')) db.exec('ALTER TABLE cards ADD COLUMN music_link TEXT');
 }
 
 /** Раньше шаблон закреплялся за кодом при выпуске. Теперь у кода только тип, а неиспользованные коды снова открывают каталог. */
@@ -90,6 +97,7 @@ function toCard(row) {
     recipient: row.recipient,
     message: row.message,
     songId: row.song_id,
+    musicLink: row.music_link ?? null,
     photos: JSON.parse(row.photos),
     activatedAt: row.activated_at,
     expiresAt: row.expires_at,
@@ -182,13 +190,13 @@ export function createRepo(db) {
       return toCard(db.prepare('SELECT * FROM cards WHERE code = ?').get(code));
     },
 
-    saveDraft(code, { templateId, palette = null, sender, recipient, message, songId, photos }, now) {
+    saveDraft(code, { templateId, palette = null, sender, recipient, message, songId, musicLink = null, photos }, now) {
       const { changes } = db
         .prepare(
-          `UPDATE cards SET status = 'draft', template_id = ?, palette = ?, sender = ?, recipient = ?, message = ?, song_id = ?, photos = ?, updated_at = ?
+          `UPDATE cards SET status = 'draft', template_id = ?, palette = ?, sender = ?, recipient = ?, message = ?, song_id = ?, music_link = ?, photos = ?, updated_at = ?
            WHERE code = ? AND status IN ('new', 'draft')`,
         )
-        .run(templateId, palette, sender, recipient, message, songId, JSON.stringify(photos), now, code);
+        .run(templateId, palette, sender, recipient, message, songId, musicLink, JSON.stringify(photos), now, code);
       return changes === 1;
     },
 
