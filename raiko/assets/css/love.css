@@ -22,7 +22,9 @@
 .t-love .gate { gap: 8px; background: radial-gradient(90% 60% at 50% 46%, var(--bg2), var(--bg) 76%); }
 .lv-halo { position: absolute; top: 46%; left: 50%; width: 130vw; max-width: 680px; aspect-ratio: 1; transform: translate(-50%, -50%); background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), transparent 72%); pointer-events: none; animation: lv-halo 2.2s ease-in-out infinite; }
 @keyframes lv-halo { 50% { transform: translate(-50%, -50%) scale(1.08); opacity: .75; } }
-.lv-kicker { position: relative; z-index: 2; margin: 0; font: italic 500 19px/1 var(--font-head); letter-spacing: .1em; color: var(--accent2); }
+.lv-lead { position: relative; z-index: 2; max-width: 320px; margin: 0; font: italic 500 clamp(22px, 6vw, 27px)/1.3 var(--font-head); color: var(--ink); }
+.lv-lead-soft { margin-bottom: 6px; font-size: clamp(17px, 4.6vw, 20px); color: var(--accent2); }
+.t-love.tone-light .lv-lead-soft { color: var(--accent); }
 .lock { position: relative; z-index: 3; width: min(56vw, 214px); margin: 6px 0 2px; animation: lv-beat 2.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
 @keyframes lv-beat { 0%, 40%, 100% { transform: scale(1); } 10% { transform: scale(1.05); } 22% { transform: scale(1.01); } 30% { transform: scale(1.04); } }
 .lock-svg { display: block; width: 100%; overflow: visible; }
@@ -52,13 +54,10 @@
 }
 .card.opening .shackle { transform: translateY(-24px) rotate(-30deg); }
 .card.opening .lock-heart { filter: drop-shadow(0 0 32px var(--accent)) brightness(1.18); }
-.card.opening :is(.lv-kicker, .t-love .gate-hint, .t-love .gate-title) { opacity: 0; transition: opacity .5s ease .2s; }
+.card.opening :is(.lv-lead, .t-love .gate-hint) { opacity: 0; transition: opacity .5s ease .2s; }
 
-/* ---------- Приветствие ---------- */
-.t-love .eyebrow { margin-bottom: 4px; font: italic 500 23px/1.2 var(--font-head); color: var(--accent2); opacity: 1; }
-.t-love.tone-light :is(.eyebrow, .lv-kicker, .final-thanks) { color: var(--accent); }
-.t-love .recipient { font-style: italic; font-weight: 500; font-size: clamp(62px, 19vw, 108px); line-height: 1; color: var(--ink); text-shadow: 0 0 54px color-mix(in srgb, var(--accent) 50%, transparent); }
-.lv-beat { display: block; width: 210px; margin: 20px auto 0; overflow: visible; }
+/* ---------- Пульс: разделитель над письмом ---------- */
+.lv-beat { display: block; width: 180px; margin: 0 auto 18px; overflow: visible; }
 .lv-beat .beat-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; }
 .scene.in .lv-beat .beat-line { animation: lv-draw 1.4s ease .5s forwards; }
 .scene.in .lv-beat .beat-tail { animation-delay: 1.3s; }
@@ -68,27 +67,67 @@
 @keyframes lv-pop { to { transform: scale(1); } }
 @keyframes lv-heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }
 
-/* ---------- Текст: письмо с сургучной печатью ---------- */
-.t-love .scene-message .panel { padding: 54px 26px 32px; border: 1px solid var(--paper-line); border-radius: 6px; background: var(--paper); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 30px 60px -32px rgba(0, 0, 0, .5); }
-.lv-seal { position: absolute; top: -32px; left: 50%; width: 64px; margin-left: -32px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .3)); }
+/* ---------- Светящийся конверт «Только для…» ---------- */
+.lv-envelope { position: relative; width: min(80vw, 330px); aspect-ratio: 1.45; margin-top: 40px; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 0 28px color-mix(in srgb, var(--accent) 55%, transparent)); animation: lv-env-glow 2.6s ease-in-out infinite; }
+@keyframes lv-env-glow { 50% { filter: drop-shadow(0 0 50px color-mix(in srgb, var(--accent) 80%, transparent)); } }
+.env-back { position: absolute; inset: 0; border-radius: 10px; background: color-mix(in srgb, var(--accent2) 30%, #f4e6d8); }
+.env-paper { position: absolute; z-index: 2; left: 7%; right: 7%; top: 7%; bottom: 9%; border-radius: 6px; background: #fffaf3; transition: transform .9s cubic-bezier(.3, 1.2, .5, 1) .45s; }
+.env-front { position: absolute; z-index: 3; inset: 0; border-radius: 10px; background: color-mix(in srgb, var(--accent2) 40%, #f2dfcd); clip-path: polygon(0 0, 50% 62%, 100% 0, 100% 100%, 0 100%); }
+.env-flap { position: absolute; z-index: 4; left: 0; right: 0; top: 0; height: 64%; background: color-mix(in srgb, var(--accent2) 50%, #eed5c1); clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: 50% 0; transition: transform .6s ease, z-index 0s .3s; }
+.env-seal { position: absolute; z-index: 5; left: 50%; top: 64%; width: 52px; margin: -26px 0 0 -26px; transition: opacity .3s ease; }
+.env-label { position: absolute; z-index: 5; left: 0; right: 0; bottom: 8%; font: italic 600 clamp(19px, 5.4vw, 23px)/1.2 var(--font-head); color: color-mix(in srgb, var(--accent) 55%, #2b0b14); }
+.lv-envelope.is-open { animation: none; }
+.lv-envelope.is-open .env-flap { z-index: 1; transform: perspective(700px) rotateX(180deg); }
+.lv-envelope.is-open .env-seal { opacity: 0; }
+.lv-envelope.is-open .env-paper { transform: translateY(-48%); }
+.lv-envelope:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; border-radius: 12px; }
+.lv-env-hint { margin: 24px 0 0; font: italic 400 19px/1.3 var(--font-head); opacity: .8; }
+.lv-seal { display: block; width: 100%; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .3)); }
 .lv-seal .wax { fill: var(--accent); }
 .lv-seal .wax-heart { fill: color-mix(in srgb, var(--accent) 55%, #000); opacity: .55; }
-.t-love .message { font-family: var(--font-body); font-style: italic; font-size: clamp(20px, 5.4vw, 25px); line-height: 1.6; }
-.t-love .message.long { font-size: clamp(17px, 4.6vw, 20px); }
+/* Письмо и всё после него видно, только когда конверт открыли. */
+.scenes:not(.is-open) .lv-after { display: none; }
+
+/* ---------- Письмо ---------- */
+.lv-letter { position: relative; width: 100%; max-width: 440px; padding: 36px 26px 34px; border-radius: 4px; color: #3b1520; box-shadow: 0 30px 60px -28px rgba(0, 0, 0, .65);
+  background: repeating-linear-gradient(transparent 0 35px, rgba(140, 60, 80, .1) 35px 36px) 0 22px, #fffaf3; }
+.t-love .message { font-family: var(--font-body); font-style: italic; font-size: clamp(19px, 5.2vw, 23px); line-height: 1.6; color: #3b1520; }
+.t-love .message.long { font-size: clamp(16px, 4.4vw, 19px); }
 .t-love .signature span { font: italic 500 21px var(--font-head); }
-.t-love .signature b { font-family: var(--font-hand); font-weight: 700; font-size: 44px; line-height: 1; color: var(--accent); }
+.t-love .signature b { font-family: var(--font-hand); font-weight: 700; font-size: 44px; line-height: 1; color: color-mix(in srgb, var(--accent) 80%, #5a0f22); }
+.lv-letter-scene .hello-song { margin-top: 30px; }
 
-/* ---------- Фото: кадры плёнки ---------- */
-.t-love .section-title { font-style: italic; font-weight: 500; font-size: clamp(36px, 10vw, 46px); }
-.t-love .photos figure { position: relative; padding: 24px 9px; border-radius: 4px; background: #121012; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, .6); }
-.t-love .photos figure::before, .t-love .photos figure::after { content: ''; position: absolute; left: 8px; right: 8px; height: 9px; border-radius: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .88) 0 9px, transparent 9px 18px); opacity: .85; }
-.t-love .photos figure::before { top: 8px; }
-.t-love .photos figure::after { bottom: 8px; }
-.t-love .photos img { aspect-ratio: 4 / 5; filter: saturate(.92) contrast(1.04); }
+/* ---------- Наша история: кадры плёнки с подписями ---------- */
+.lv-story { gap: 26px; }
+.lv-title { margin: 0; font: italic 500 clamp(36px, 10vw, 48px)/1.1 var(--font-head); }
+.lv-frame { position: relative; width: 100%; max-width: 380px; margin: 0; padding: 26px 10px 18px; border-radius: 4px; background: #121012; box-shadow: 0 22px 44px -20px rgba(0, 0, 0, .65); }
+.lv-frame::before, .lv-frame::after { content: ''; position: absolute; left: 8px; right: 8px; height: 9px; border-radius: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .85) 0 9px, transparent 9px 18px); opacity: .8; }
+.lv-frame::before { top: 9px; }
+.lv-frame::after { bottom: 9px; }
+.lv-frame .photo-btn { width: 100%; aspect-ratio: 4 / 5; }
+.lv-frame .photo-btn img { filter: saturate(.92) contrast(1.04); }
+.lv-frame figcaption { margin: 14px 0 12px; font: italic 500 22px/1.25 var(--font-head); color: #f6e7e2; }
+.lv-story .hello-song { margin-top: 6px; }
 
-/* ---------- Финал: два имени ---------- */
-.lv-pair { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 14px; margin: 0 0 16px; font: italic 500 clamp(32px, 9.4vw, 46px)/1.1 var(--font-head); color: var(--ink); overflow-wrap: anywhere; }
-.lv-pair-heart { width: 30px; flex: none; fill: var(--accent); animation: lv-heartbeat 1.4s ease-in-out infinite; }
-.t-love .final-thanks { font-family: var(--font-hand); font-weight: 700; font-size: clamp(32px, 9.4vw, 44px); color: var(--accent2); }
-.t-love .thanks { background: var(--accent); color: #fff; font-family: var(--font-body); }
+/* ---------- Финал: половинки замка становятся двумя сердцами ---------- */
+.lv-finale { display: block; width: min(60vw, 240px); margin: 0 auto 8px; overflow: visible; }
+.lf-shackle { fill: none; stroke: color-mix(in srgb, var(--accent) 35%, #e9e4e8); stroke-width: 15; stroke-linecap: round; transform: translateY(-22px) rotate(-30deg); transform-box: view-box; transform-origin: 62px 124px; }
+.lf-half { fill: var(--accent); transform-box: view-box; }
+.lf-heart { fill: var(--accent); opacity: 0; transform-box: fill-box; }
+.lf-heart-r { fill: var(--accent2); }
+.scene.in .lf-left { animation: lv-half-l 1.4s ease .5s forwards; }
+.scene.in .lf-right { animation: lv-half-r 1.4s ease .5s forwards; }
+.scene.in .lf-shackle { animation: lv-fade-out 1s ease .4s forwards; }
+.scene.in .lf-heart { animation: lv-heart-in 1.2s ease 1.5s forwards, lv-heart-glow 2.2s ease-in-out 2.8s infinite alternate; }
+@keyframes lv-half-l { to { transform: translate(-40px, 10px) rotate(-14deg) scale(.6); opacity: 0; } }
+@keyframes lv-half-r { to { transform: translate(40px, 10px) rotate(14deg) scale(.6); opacity: 0; } }
+@keyframes lv-fade-out { to { opacity: 0; } }
+@keyframes lv-heart-in { from { opacity: 0; } to { opacity: 1; filter: drop-shadow(0 0 10px var(--accent)); } }
+@keyframes lv-heart-glow { to { filter: drop-shadow(0 0 22px var(--accent)); } }
+.t-love .final-thanks { max-width: 360px; font: italic 500 clamp(28px, 8vw, 38px)/1.25 var(--font-head); color: var(--ink); }
+.lv-final-sub { max-width: 340px; margin: -10px 0 26px; font: italic 400 19px/1.4 var(--font-body); color: var(--accent2); }
+.t-love.tone-light .lv-final-sub { color: var(--accent); }
+.t-love .story-action { background: var(--accent); color: #fff; font-family: var(--font-body); font-style: italic; }
+.t-love .thanks { border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent); background: transparent; color: var(--ink); font-family: var(--font-body); }
 .t-love .next-btn { font: italic 500 20px var(--font-head); }

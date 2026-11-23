@@ -1,14 +1,15 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { LIFETIME, LIMITS } from '../config.js';
+import { LIMITS } from '../config.js';
+import { lifetimeMs } from '../lifetime.js';
 import { clientIp, createRateLimiter } from '../security.js';
 import { serveFile } from '../serve-file.js';
 import { sweep } from '../sweep.js';
-import { getPalette, getTemplate, getTier, isPaletteAllowed, isTemplateAllowed, MAX_PHOTOS_ANY, templatesForTier } from '../tiers.js';
+import { CATALOG, getPalette, getTemplate, isInCatalog, isPaletteAllowed, MAX_PHOTOS } from '../tiers.js';
 import { isJpeg, isValidCode, isValidPhotoName, isValidSongFile, validateGreeting } from '../validation.js';
 import { renderCard } from '../../raiko/card.js';
 import { canonicalLink, MUSIC_LINK_ERROR, MUSIC_START_ERROR, musicEmbed, parseMusicLink, readStartTime, withStart } from '../../public/js/music-link.js';
-import { occasionsForTier } from '../texts.js';
+import { OCCASION_TEXTS } from '../texts.js';
 import { renderCatalog } from '../views/catalog.js';
 import { renderForm } from '../views/form.js';
 import { goneInfo, landingPage } from '../views/pages.js';
@@ -26,7 +27,7 @@ const fail = (c, status, error, errors) => c.json({ success: false, error, error
 
 /** Текст демо по теме шаблона: новогодний для Нового года, праздничный для дня рождения. */
 function demoMessage(template) {
-  const occasion = occasionsForTier('basic').find((item) => item.id === template.occasion);
+  const occasion = OCCASION_TEXTS.find((item) => item.id === template.occasion);
   return occasion?.texts.ru[0] ?? DEMO.message;
 }
 
@@ -61,10 +62,9 @@ function selectPalette(template, rawId) {
 }
 
 function collectPhotos(form, card) {
-  const { maxPhotos } = getTier(card.tier);
   const keep = form.getAll('keep').filter((name) => card.photos.includes(name));
   const files = form.getAll('photos').filter((file) => file instanceof File && file.size > 0);
-  if (keep.length + files.length > maxPhotos) return { error: `Можно добавить не больше ${maxPhotos} фото` };
+  if (keep.length + files.length > MAX_PHOTOS) return { error: `Можно добавить не больше ${MAX_PHOTOS} фото` };
   if (files.some((file) => file.size > LIMITS.photoBytes)) return { error: 'Фото слишком большое' };
   return { keep, files };
 }
@@ -79,13 +79,8 @@ async function readJpegs(files) {
   return buffers;
 }
 
-function exceedsTierSize(c, tierId) {
-  const declared = Number(c.req.header('content-length'));
-  return declared > getTier(tierId).maxPhotos * LIMITS.photoBytes + FORM_OVERHEAD_BYTES;
-}
-
-/** Шаблон можно заполнять, если он есть в каталоге этого кода или уже выбран в черновике (архивный шаблон). */
-const canUseTemplate = (template, card) => Boolean(template) && (isTemplateAllowed(template, card.tier) || template.id === card.templateId);
+/** Шаблон можно заполнять, если он есть в каталоге или уже выбран в черновике (архивный шаблон). */
+const canUseTemplate = (template, card) => Boolean(template) && (isInCatalog(template) || template.id === card.templateId);
 
 export function publicRoutes({ repo, storage, now, config }) {
   const routes = new Hono();
@@ -100,7 +95,8 @@ export function publicRoutes({ repo, storage, now, config }) {
   const freshCard = (code) => {
     if (!isValidCode(code)) return null;
     const card = repo.getCard(code);
-    if (card?.status === 'active' && card.expiresAt <= now()) {
+    const isOverdue = card?.status === 'active' && card.expiresAt !== null && card.expiresAt <= now();
+    if (isOverdue) {
       sweep({ repo, storage, now: now() });
       return repo.getCard(code);
     }
@@ -128,18 +124,19 @@ export function publicRoutes({ repo, storage, now, config }) {
         mode,
         code: card.code,
         today: now(),
+        lifetimeDays: repo.batchLifetimeDays(card.batchId),
         ...extra,
       }).value,
     );
   };
 
   const showForm = (c, card, template) =>
-    c.html(renderForm({ card, template, songs: repo.listSongs(template.id), maxPhotos: getTier(card.tier).maxPhotos, today: now() }).value);
+    c.html(renderForm({ card, template, songs: repo.listSongs(template.id), today: now() }).value);
 
   /** Демо открыто из каталога: внизу кнопка «Выбрать этот шаблон», чтобы не возвращаться назад. */
   const demoChoice = (fromCode, template, paletteId) => {
     const card = isValidCode(String(fromCode)) ? repo.getCard(fromCode) : null;
-    if (!card || (card.status !== 'new' && card.status !== 'draft') || !isTemplateAllowed(template, card.tier)) return null;
+    if (!card || (card.status !== 'new' && card.status !== 'draft') || !isInCatalog(template)) return null;
     return { code: card.code, href: `/c/${card.code}?template=${template.id}${paletteId ? `&palette=${paletteId}` : ''}`, back: `/c/${card.code}?pick=1` };
   };
 
@@ -156,7 +153,6 @@ export function publicRoutes({ repo, storage, now, config }) {
         palette,
         ...DEMO,
         message: demoMessage(template),
-        photoUrls: DEMO.photoUrls.slice(0, template.maxPhotos),
         songUrl: song ? `/media/s/${song.file}` : null,
         mode: 'demo',
         today: now(),
@@ -178,21 +174,20 @@ export function publicRoutes({ repo, storage, now, config }) {
     if (card.status === 'draft' && !wantsCatalog) {
       return c.req.query('edit') === '1' ? showForm(c, card, getTemplate(card.templateId)) : showCard(c, card, 'draft');
     }
-    return c.html(renderCatalog({ card, templates: templatesForTier(card.tier) }).value);
+    return c.html(renderCatalog({ card, templates: CATALOG }).value);
   });
 
   routes.post(
     '/c/:code',
     limit(allowWrite),
     bodyLimit({
-      maxSize: MAX_PHOTOS_ANY * LIMITS.photoBytes + FORM_OVERHEAD_BYTES,
+      maxSize: MAX_PHOTOS * LIMITS.photoBytes + FORM_OVERHEAD_BYTES,
       onError: (c) => fail(c, 413, 'Файлы слишком большие'),
     }),
     async (c) => {
       const card = freshCard(c.req.param('code'));
       if (!card) return c.notFound();
       if (card.status !== 'new' && card.status !== 'draft') return fail(c, 409, 'Открытка уже активирована');
-      if (exceedsTierSize(c, card.tier)) return fail(c, 413, 'Файлы слишком большие');
 
       const form = await c.req.formData();
       const template = getTemplate(form.get('templateId'));
@@ -227,7 +222,9 @@ export function publicRoutes({ repo, storage, now, config }) {
   routes.post('/c/:code/activate', limit(allowWrite), (c) => {
     const code = c.req.param('code');
     if (!isValidCode(code)) return c.notFound();
-    if (!repo.activate(code, now(), LIFETIME.activeMs)) return fail(c, 409, 'Сначала заполните открытку');
+    const card = repo.getCard(code);
+    const lifetime = card ? lifetimeMs(repo.batchLifetimeDays(card.batchId)) : null;
+    if (!card || !repo.activate(code, now(), lifetime)) return fail(c, 409, 'Сначала заполните открытку');
     return c.json({ success: true });
   });
 

@@ -1,6 +1,9 @@
 import { BRAND, whatsappLink } from '../src/brand.js';
+import { DEFAULT_LIFETIME_DAYS, lifetimeSentence } from '../src/lifetime.js';
 import { closingLine, renderBackdrop, renderSceneDecor } from './decor.js';
 import { renderDivider, renderGate } from './gates.js';
+import { songBlock } from './story.js';
+import { getTheme } from './themes/index.js';
 import { asset, designFileText } from '../src/views/assets.js';
 import { html, raw } from '../src/views/html.js';
 import { brandMark, contactLinks, documentPage } from '../src/views/pages.js';
@@ -35,37 +38,27 @@ function photoScene(template, photoUrls, decorData) {
   </section>`;
 }
 
-const SONG_LABEL = 'Эта песня — для тебя';
-const PLAYER_PERMISSIONS = 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write';
-
-/**
- * Песня, которую выбрал отправитель, в официальном плеере сервиса. Стоит сразу под именем: когда песня стартует,
- * плеер должен быть на виду (так требует YouTube). Плеер грузится по касанию первого экрана, YouTube включается сам.
- * Если браузер не дал включить звук (iPhone разрешает его только после нажатия на сам плеер), появляется подсказка.
- * Spotify, Apple Music и Яндекс управлять собой не дают: там человек жмёт ▶ сам. В демо на этом месте заглушка.
- * Подпись над плеером можно задать шаблону в labels.song.
- */
-function helloSong(template, music, mode) {
-  if (!music && mode !== 'demo') return '';
-  return html`<div class="hello-song reveal">
-    <p class="song-label">${template.labels.song ?? SONG_LABEL}</p>
-    ${music ? songPlayer(music) : songPlaceholder()}
-    ${music ? html`<p class="song-hint" ${music.controlSrc ? 'hidden' : ''}>Нажми ▶ — песня будет играть, пока листаешь</p>` : ''}
-  </div>`;
-}
-
-function songPlayer(music) {
-  return html`<div class="song-player" data-service="${music.service}" style="${music.height ? `--player-h:${music.height}px` : ''}">
-    <iframe data-src="${music.controlSrc ?? music.src}" ${music.controlSrc ? html`data-autoplay="${music.service}"` : ''} title="Песня в открытке, ${music.name}" allow="${PLAYER_PERMISSIONS}" referrerpolicy="strict-origin"></iframe>
-  </div>`;
-}
-
-function songPlaceholder() {
-  return html`<div class="song-player song-demo">
-    <span class="song-demo-note" aria-hidden="true">♪</span>
-    <b>Здесь будет ваша песня</b>
-    <small>Ссылка из YouTube, Spotify, Apple Music или Яндекс Музыки</small>
-  </div>`;
+/** Старые шаблоны (уже не в каталоге): экраны по очереди — имя, пожелание, фото. */
+function classicScenes(template, card, decorData) {
+  const { recipient, sender, message, photoUrls, music, mode } = card;
+  return html`<section class="scene scene-hello">
+      <div class="panel">
+        ${renderSceneDecor(template.id, 'hello', decorData)}
+        <p class="eyebrow reveal">${template.labels.eyebrow}</p>
+        <h1 class="recipient reveal ${[...recipient].length > LONG_NAME_CHARS ? 'name-long' : ''}">${recipient}</h1>
+        <div class="reveal">${renderDivider(template.id)}</div>
+        ${songBlock(template, music, mode)}
+      </div>
+      <p class="scroll-hint reveal">Листай вниз</p>
+    </section>
+    <section class="scene scene-message">
+      <div class="panel">
+        ${renderSceneDecor(template.id, 'message', decorData)}
+        <blockquote class="message ${[...message].length > LONG_MESSAGE_CHARS ? 'long' : ''} reveal">${message}</blockquote>
+        <p class="signature reveal"><span>${template.labels.from}</span> <b>${sender}</b></p>
+      </div>
+    </section>
+    ${photoScene(template, photoUrls, decorData)}`;
 }
 
 function closingScene(templateId, sender, decorData) {
@@ -94,7 +87,7 @@ function brandPage(mode, code) {
   </section>`;
 }
 
-function draftControls() {
+function draftControls(lifetimeDays) {
   return html`<div class="draft-bar">
       <span class="draft-label">Шаг 3 из 3 · проверьте открытку и активируйте</span>
       <div class="draft-actions">
@@ -104,7 +97,7 @@ function draftControls() {
     </div>
     <dialog id="confirm-dialog" class="confirm">
       <h2>Активировать открытку?</h2>
-      <p>После активации изменить её будет нельзя. Открытка будет доступна 7 дней.</p>
+      <p>После активации изменить её будет нельзя. ${lifetimeSentence(lifetimeDays)}</p>
       <p id="confirm-error" class="confirm-error" role="alert" hidden></p>
       <div class="confirm-actions">
         <button id="confirm-no" class="ui-btn ghost" type="button">Отмена</button>
@@ -156,13 +149,19 @@ function demoBar(template, palette, choice) {
 
 /**
  * @param {{ template: object, palette?: object | null, music?: object | null, sender: string, recipient: string, message: string, photoUrls: string[],
- *   songUrl: string | null, mode: 'live' | 'draft' | 'demo', code?: string, activatedNotice?: boolean, expiresAt?: number,
- *   today?: number, choice?: { href: string, back: string, code: string } | null }} card
+ *   songUrl: string | null, mode: 'live' | 'draft' | 'demo', code?: string, activatedNotice?: boolean, expiresAt?: number | null,
+ *   lifetimeDays?: number | null, today?: number, choice?: { href: string, back: string, code: string } | null }} card
+ *   expiresAt и lifetimeDays: null — открытка хранится навсегда.
  */
-export function renderCard({ template, palette = null, music = null, sender, recipient, message, photoUrls, songUrl, mode, code, activatedNotice, expiresAt, today = Date.now(), choice = null }) {
+export function renderCard({ template, palette = null, music = null, sender, recipient, message, photoUrls, songUrl, mode, code, activatedNotice, expiresAt, lifetimeDays = DEFAULT_LIFETIME_DAYS, today = Date.now(), choice = null }) {
   const decorData = { initial: initialOf(recipient), senderInitial: initialOf(sender), recipient, sender, year: newYearOf(today) };
   const gate = renderGate(template.id, { ...decorData, firstPhoto: photoUrls[0] ?? null });
-  const longClass = [...message].length > LONG_MESSAGE_CHARS ? 'long' : '';
+  const content = { recipient, sender, message, photoUrls, music, mode };
+  /* У новых шаблонов своя история после открытия (story в файле темы), у старых — экраны по очереди. */
+  const theme = getTheme(template.id);
+  const story = theme?.story
+    ? theme.story({ ...decorData, template, message, photoUrls, from: template.labels.from, song: songBlock(template, music, mode) })
+    : null;
   const toneClass = palette ? ` tone-${palette.tone} pal-${palette.id}` : '';
   const withDemoBar = mode === 'demo' && (template.palettes.length > 0 || Boolean(choice));
   return documentPage({
@@ -170,39 +169,21 @@ export function renderCard({ template, palette = null, music = null, sender, rec
     themeColor: palette?.bg ?? template.bg,
     head: html`${headLinks(template, palette)}${mode === 'draft' ? html`<script src="${asset('js/draft.js')}" defer></script>` : ''}`,
     bodyClass: `locked mode-${mode}${withDemoBar ? ' has-demo-bar' : ''}`,
-    body: html`<main class="card t-${template.id}${toneClass} fonts-wait" data-fx="${template.fx}" data-open-ms="${template.openMs}" data-code="${code ?? ''}" data-track="${mode === 'live' && !activatedNotice ? '1' : '0'}">
+    body: html`<main class="card t-${template.id}${toneClass} fonts-wait" data-fx="${template.fx}" data-open-ms="${template.openMs}" data-sound="${theme?.sound ?? ''}" data-code="${code ?? ''}" data-track="${mode === 'live' && !activatedNotice ? '1' : '0'}">
       <div class="backdrop" aria-hidden="true">${renderBackdrop(template.id)}</div>
       <canvas class="fx" aria-hidden="true"></canvas>
       ${songUrl ? html`<audio class="bg-music" src="${songUrl}" loop preload="none"></audio>
         <button class="mute" type="button" aria-label="Выключить музыку" aria-pressed="false" hidden>♪</button>` : ''}
       <section class="gate">
-        ${activatedNotice ? html`<p class="activated-note">Готово! Открытка активна до ${DATE_FORMAT.format(expiresAt)}</p>` : ''}
+        ${activatedNotice ? html`<p class="activated-note">${expiresAt ? `Готово! Открытка активна до ${DATE_FORMAT.format(expiresAt)}` : 'Готово! Открытка сохранена навсегда'}</p>` : ''}
         ${mode === 'demo' ? html`<p class="demo-note">Пример шаблона</p>` : ''}
         ${gate}
       </section>
       <div class="scenes">
-        <section class="scene scene-hello">
-          <div class="panel">
-            ${renderSceneDecor(template.id, 'hello', decorData)}
-            <p class="eyebrow reveal">${template.labels.eyebrow}</p>
-            <h1 class="recipient reveal ${[...recipient].length > LONG_NAME_CHARS ? 'name-long' : ''}">${recipient}</h1>
-            <div class="reveal">${renderDivider(template.id)}</div>
-            ${helloSong(template, music, mode)}
-          </div>
-          <p class="scroll-hint reveal">Листай вниз</p>
-        </section>
-        <section class="scene scene-message">
-          <div class="panel">
-            ${renderSceneDecor(template.id, 'message', decorData)}
-            <blockquote class="message ${longClass} reveal">${message}</blockquote>
-            <p class="signature reveal"><span>${template.labels.from}</span> <b>${sender}</b></p>
-          </div>
-        </section>
-        ${photoScene(template, photoUrls, decorData)}
-        ${closingScene(template.id, sender, decorData)}
+        ${story ?? html`${classicScenes(template, content, decorData)}${closingScene(template.id, sender, decorData)}`}
       </div>
       ${brandPage(mode, code)}
-      ${mode === 'draft' ? draftControls() : ''}
+      ${mode === 'draft' ? draftControls(lifetimeDays) : ''}
       ${withDemoBar ? demoBar(template, palette, choice) : ''}
     </main>`,
   });

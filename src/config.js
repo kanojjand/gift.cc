@@ -1,4 +1,4 @@
-const DAY_MS = 24 * 60 * 60 * 1000;
+export const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_SECRET_LENGTH = 32;
 
 export const LIMITS = Object.freeze({
@@ -6,13 +6,11 @@ export const LIMITS = Object.freeze({
   recipientLength: 60,
   messageLength: 1000,
   photoBytes: 1.5 * 1024 * 1024,
-  songBytes: 60 * 1024 * 1024,
   batchSize: 500,
-  songSlots: 3,
 });
 
+/** Срок жизни активной открытки задаёт её партия (src/lifetime.js), здесь — только брошенные черновики. */
 export const LIFETIME = Object.freeze({
-  activeMs: 7 * DAY_MS,
   abandonedDraftMs: 7 * DAY_MS,
 });
 

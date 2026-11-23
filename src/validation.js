@@ -5,14 +5,6 @@ const CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const CODE_LENGTH = 12;
 const CODE_PATTERN = new RegExp(`^[${CODE_ALPHABET}]{${CODE_LENGTH}}$`);
 
-export const SONG_TYPES = Object.freeze({
-  mp3: 'audio/mpeg',
-  m4a: 'audio/mp4',
-  aac: 'audio/aac',
-  ogg: 'audio/ogg',
-  wav: 'audio/wav',
-});
-
 export function generateCode() {
   return Array.from({ length: CODE_LENGTH }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join('');
 }
@@ -79,9 +71,4 @@ export function validateGreeting(input) {
 export function parseQuantity(value) {
   const quantity = Number(value);
   return Number.isInteger(quantity) && quantity >= 1 && quantity <= LIMITS.batchSize ? quantity : null;
-}
-
-export function songExtension(filename) {
-  const extension = String(filename).split('.').pop().toLowerCase();
-  return Object.hasOwn(SONG_TYPES, extension) ? extension : null;
 }

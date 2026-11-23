@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { bodyLimit } from 'hono/body-limit';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { csrf } from 'hono/csrf';
-import QRCode from 'qrcode';
-import { LIMITS } from '../config.js';
+import { DAY_MS } from '../config.js';
+import { DEFAULT_LIFETIME_DAYS, parseLifetime, termExpiry } from '../lifetime.js';
+import { qrPng, qrSvg } from '../qr.js';
 import {
   clientIp,
   createRateLimiter,
@@ -12,26 +12,25 @@ import {
   passwordMatches,
   SESSION_MAX_AGE_SECONDS,
 } from '../security.js';
-import { getTemplate, getTier, CATALOG } from '../tiers.js';
-import { generateCodes, isValidCode, parseQuantity, SONG_TYPES, songExtension } from '../validation.js';
-import { batchPage, dashboardPage, loginPage, printPage, songsPage } from '../views/admin.js';
+import { STATS_DAYS } from '../stats.js';
+import { generateCodes, isValidCode, parseQuantity } from '../validation.js';
+import { batchPage, dashboardPage, loginPage, printPage } from '../views/admin.js';
+import { cardPage } from '../views/admin-card.js';
+import { DELETE_ALL_WORD, deleteAllPage, deleteBatchPage } from '../views/admin-delete.js';
+import { statsPage } from '../views/admin-stats.js';
 
 const COOKIE = 'admin_session';
 const COOKIE_PATH = '/admin';
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_ATTEMPTS = 8;
 const LABEL_LENGTH = 80;
-const TITLE_LENGTH = 80;
-const SONG_OVERHEAD_BYTES = 64 * 1024;
-const COMPRESSED_SONG_EXTENSION = 'm4a';
 const QR_PNG_WIDTH = 1024;
 
 const cleanText = (value, max) => String(value ?? '').trim().slice(0, max);
+const publicUrl = (config, code) => `${config.baseUrl}/c/${code}`;
 
-function parseSlot(value) {
-  const slot = Number(value);
-  return Number.isInteger(slot) && slot >= 1 && slot <= LIMITS.songSlots ? slot : null;
-}
+/** Срок из формы новой партии. Старая форма без поля — прежние 7 дней; неизвестное значение — undefined. */
+const batchLifetime = (value) => (value === undefined ? DEFAULT_LIFETIME_DAYS : parseLifetime(value));
 
 function registerAuth(routes, { config, now }) {
   const allowLogin = createRateLimiter({ windowMs: LOGIN_WINDOW_MS, max: LOGIN_ATTEMPTS });
@@ -65,15 +64,12 @@ function registerAuth(routes, { config, now }) {
   });
 }
 
-function registerBatches(routes, { repo, storage, now, config }) {
-  const urlOf = (code) => `${config.baseUrl}/c/${code}`;
+function registerBatches(routes, { repo, now, config }) {
+  const urlOf = (code) => publicUrl(config, code);
+  const batchOf = (c) => repo.getBatch(Number(c.req.param('id')));
 
-  const songsLoaded = () => CATALOG.reduce((sum, template) => sum + repo.listSongs(template.id).length, 0);
   const dashboard = (c, error, status = 200) =>
-    c.html(
-      dashboardPage({ batches: repo.listBatches(), baseUrl: config.baseUrl, songsLoaded: songsLoaded(), notice: c.req.query('ok'), error: error ?? c.req.query('err') }).value,
-      status,
-    );
+    c.html(dashboardPage({ batches: repo.listBatches(), baseUrl: config.baseUrl, notice: c.req.query('ok'), error: error ?? c.req.query('err') }).value, status);
 
   routes.get('/', (c) => dashboard(c));
 
@@ -82,60 +78,45 @@ function registerBatches(routes, { repo, storage, now, config }) {
     const candidates = text.match(/(?<![a-z0-9])[a-z0-9]{12}(?![a-z0-9])/g) ?? [];
     const card = candidates.filter(isValidCode).map((code) => repo.getCard(code)).find(Boolean);
     if (!card) return c.redirect('/admin?err=not-found', 302);
-    return c.redirect(`/admin/batches/${card.batchId}?found=${card.code}#${card.code}`, 302);
+    return c.redirect(`/admin/cards/${card.code}`, 302);
   });
 
   routes.post('/batches', async (c) => {
     const body = await c.req.parseBody();
-    const tier = getTier(body.tier);
     const quantity = parseQuantity(body.quantity);
-    if (!tier || !quantity) return dashboard(c, 'bad-batch', 400);
-    const batchId = repo.createBatch({
-      tier: tier.id,
-      label: cleanText(body.label, LABEL_LENGTH),
-      codes: generateCodes(quantity),
-      now: now(),
-    });
+    const lifetimeDays = batchLifetime(body.lifetime);
+    if (!quantity || lifetimeDays === undefined) return dashboard(c, 'bad-batch', 400);
+    const batchId = repo.createBatch({ label: cleanText(body.label, LABEL_LENGTH), codes: generateCodes(quantity), now: now(), lifetimeDays });
     return c.redirect(`/admin/batches/${batchId}?ok=batch-created`, 302);
   });
 
   routes.get('/batches/:id', (c) => {
-    const batch = repo.getBatch(Number(c.req.param('id')));
+    const batch = batchOf(c);
     if (!batch) return c.notFound();
-    return c.html(
-      batchPage({ batch, cards: repo.listCards(batch.id), urlOf, filter: c.req.query('status'), found: c.req.query('found'), notice: c.req.query('ok') }).value,
-    );
+    const { status, found, ok, err } = c.req.query();
+    return c.html(batchPage({ batch, cards: repo.listCards(batch.id), urlOf, filter: status, found, notice: ok, error: err }).value);
   });
 
-  routes.post('/batches/:id/delete', (c) => {
-    const id = Number(c.req.param('id'));
-    if (!repo.getBatch(id)) return c.notFound();
-    if (!repo.deleteUnusedBatch(id)) return c.redirect(`/admin/batches/${id}`, 302);
-    return c.redirect('/admin?ok=batch-deleted', 302);
+  routes.post('/batches/:id/settings', async (c) => {
+    const batch = batchOf(c);
+    if (!batch) return c.notFound();
+    const body = await c.req.parseBody();
+    const lifetimeDays = parseLifetime(body.lifetime);
+    if (lifetimeDays === undefined) return c.redirect(`/admin/batches/${batch.id}?err=bad-lifetime`, 302);
+    repo.updateBatch(batch.id, { label: cleanText(body.label, LABEL_LENGTH), lifetimeDays, extendActive: body.extendActive === '1' });
+    return c.redirect(`/admin/batches/${batch.id}?ok=batch-saved`, 302);
   });
 
-  routes.get('/cards/:code/qr.png', async (c) => {
-    const code = c.req.param('code');
-    if (!isValidCode(code) || !repo.getCard(code)) return c.notFound();
-    const png = await QRCode.toBuffer(urlOf(code), { type: 'png', width: QR_PNG_WIDTH, margin: 2, errorCorrectionLevel: 'M' });
-    return c.body(png, 200, { 'content-type': 'image/png', 'content-disposition': `attachment; filename="qr-${code}.png"` });
-  });
-
-  routes.get('/batches/:id/print', async (c) => {
-    const batch = repo.getBatch(Number(c.req.param('id')));
+  routes.get('/batches/:id/print', (c) => {
+    const batch = batchOf(c);
     if (!batch) return c.notFound();
     const unused = repo.listCards(batch.id).filter((card) => card.status === 'new');
-    const items = await Promise.all(
-      unused.map(async (card) => ({
-        code: card.code,
-        svg: await QRCode.toString(urlOf(card.code), { type: 'svg', errorCorrectionLevel: 'M', margin: 1 }),
-      })),
-    );
+    const items = unused.map((card) => ({ code: card.code, svg: qrSvg(urlOf(card.code)) }));
     return c.html(printPage({ batch, items }).value);
   });
 
   routes.get('/batches/:id/codes.csv', (c) => {
-    const batch = repo.getBatch(Number(c.req.param('id')));
+    const batch = batchOf(c);
     if (!batch) return c.notFound();
     const rows = repo.listCards(batch.id).map((card) => `${card.code},${urlOf(card.code)},${card.status}`);
     return c.body(['code,url,status', ...rows].join('\r\n') + '\r\n', 200, {
@@ -143,70 +124,108 @@ function registerBatches(routes, { repo, storage, now, config }) {
       'content-disposition': `attachment; filename="batch-${batch.id}.csv"`,
     });
   });
+}
+
+/** Удаление одной партии или всех сразу; фото удалённых открыток стираются с диска. */
+function registerDeletion(routes, { repo, storage }) {
+  const batchOf = (c) => repo.getBatch(Number(c.req.param('id')));
+  const removePhotos = (codes) => codes.forEach((code) => storage.removePhotos(code));
+
+  routes.get('/batches/:id/delete', (c) => {
+    const batch = batchOf(c);
+    if (!batch) return c.notFound();
+    return c.html(deleteBatchPage({ batch }).value);
+  });
+
+  /** Пустую партию удаляет одна кнопка; партию с открытками — только если ввели её номер. */
+  routes.post('/batches/:id/delete', async (c) => {
+    const batch = batchOf(c);
+    if (!batch) return c.notFound();
+    const body = await c.req.parseBody();
+    const typed = String(body.confirm ?? '').trim();
+    const codes = repo.deleteBatch(batch.id, { allowUsed: typed === String(batch.id) });
+    if (!codes) {
+      const error = typed ? 'Номер партии не совпал, ничего не удалено.' : 'В партии есть заполненные открытки. Введите номер партии, чтобы удалить её.';
+      return c.html(deleteBatchPage({ batch, error }).value, 400);
+    }
+    removePhotos(codes);
+    return c.redirect('/admin?ok=batch-deleted', 302);
+  });
+
+  routes.get('/delete-all', (c) => {
+    const batches = repo.listBatches();
+    if (batches.length === 0) return c.redirect('/admin', 302);
+    return c.html(deleteAllPage({ batches }).value);
+  });
+
+  routes.post('/delete-all', async (c) => {
+    const body = await c.req.parseBody();
+    const typed = String(body.confirm ?? '').trim().toLowerCase();
+    if (typed !== DELETE_ALL_WORD) {
+      const error = typed ? 'Слово не совпало, ничего не удалено.' : `Введите слово «${DELETE_ALL_WORD}», чтобы подтвердить.`;
+      return c.html(deleteAllPage({ batches: repo.listBatches(), error }).value, 400);
+    }
+    removePhotos(repo.deleteAllBatches());
+    return c.redirect('/admin?ok=all-deleted', 302);
+  });
+}
+
+/** Один код: его страница, QR, срок хранения, снятие и освобождение. */
+function registerCards(routes, { repo, storage, now, config }) {
+  const cardOf = (c) => {
+    const code = c.req.param('code');
+    return isValidCode(code) ? repo.getCard(code) : null;
+  };
+  const toCardPage = (c, card, query) => c.redirect(`/admin/cards/${card.code}?${query}`, 302);
+  const songTitleOf = (card) => (card.songId ? (repo.getSong(card.songId)?.title ?? null) : null);
+
+  routes.get('/cards/:code', (c) => {
+    const card = cardOf(c);
+    if (!card) return c.notFound();
+    const { ok, err } = c.req.query();
+    const page = cardPage({ card, batch: repo.getBatch(card.batchId), url: publicUrl(config, card.code), songTitle: songTitleOf(card), notice: ok, error: err });
+    return c.html(page.value);
+  });
+
+  routes.get('/cards/:code/qr.png', (c) => {
+    const card = cardOf(c);
+    if (!card) return c.notFound();
+    const png = qrPng(publicUrl(config, card.code), { width: QR_PNG_WIDTH });
+    return c.body(png, 200, { 'content-type': 'image/png', 'content-disposition': `attachment; filename="qr-${card.code}.png"` });
+  });
+
+  routes.post('/cards/:code/term', async (c) => {
+    const card = cardOf(c);
+    if (!card) return c.notFound();
+    const body = await c.req.parseBody();
+    const expiresAt = card.status === 'active' ? termExpiry(body.term, card, now()) : undefined;
+    if (expiresAt === undefined || !repo.setExpiry(card.code, expiresAt)) return toCardPage(c, card, 'err=bad-term');
+    return toCardPage(c, card, 'ok=card-term');
+  });
+
+  routes.post('/cards/:code/reset', (c) => {
+    const card = cardOf(c);
+    if (!card) return c.notFound();
+    repo.resetCard(card.code, now());
+    storage.removePhotos(card.code);
+    return toCardPage(c, card, 'ok=card-reset');
+  });
 
   routes.post('/cards/:code/block', (c) => {
-    const code = c.req.param('code');
-    if (!isValidCode(code)) return c.notFound();
-    const card = repo.getCard(code);
+    const card = cardOf(c);
     if (!card) return c.notFound();
-    repo.block(code, now());
-    storage.removePhotos(code);
+    repo.block(card.code, now());
+    storage.removePhotos(card.code);
+    if (c.req.query('back') === 'card') return toCardPage(c, card, 'ok=card-blocked');
     return c.redirect(`/admin/batches/${card.batchId}?ok=card-blocked`, 302);
   });
 }
 
-async function optimizeSong({ storage, compressSong }, file, extension) {
-  const compressed = storage.newSongName(COMPRESSED_SONG_EXTENSION);
-  const isSmaller = await compressSong(storage.songPath(file), storage.songPath(compressed));
-  if (!isSmaller) return { file, mime: SONG_TYPES[extension] };
-  storage.removeSong(file);
-  return { file: compressed, mime: SONG_TYPES[COMPRESSED_SONG_EXTENSION] };
-}
-
-function registerSongs(routes, { repo, storage, compressSong }) {
-  const invalid = (c, message) => c.html(songsPage({ repo, storage, error: message, open: c.req.param('templateId') }).value, 400);
-  const backToSongs = (c, templateId) => c.redirect(`/admin/songs?ok=song-saved&open=${templateId}#${templateId}`, 302);
-
-  routes.get('/songs', (c) => c.html(songsPage({ repo, storage, notice: c.req.query('ok'), open: c.req.query('open') }).value));
-
-  routes.post(
-    '/songs/:templateId/:slot',
-    bodyLimit({
-      maxSize: LIMITS.songBytes + SONG_OVERHEAD_BYTES,
-      onError: (c) => invalid(c, 'Файл слишком большой, максимум 60 МБ'),
-    }),
-    async (c) => {
-      const template = getTemplate(c.req.param('templateId'));
-      const slot = parseSlot(c.req.param('slot'));
-      if (!template || !slot) return invalid(c, 'Неизвестный шаблон или место для песни');
-
-      const body = await c.req.parseBody();
-      const title = cleanText(body.title, TITLE_LENGTH);
-      if (!title) return invalid(c, 'Укажите название мелодии');
-      const previous = repo.getSongBySlot(template.id, slot);
-      const hasFile = body.file instanceof File && body.file.size > 0;
-      if (!hasFile) {
-        if (!previous) return invalid(c, 'Выберите файл');
-        repo.renameSong(previous.id, title);
-        return backToSongs(c, template.id);
-      }
-
-      const extension = songExtension(body.file.name);
-      if (!extension) return invalid(c, 'Подойдут файлы mp3, m4a, aac, ogg или wav');
-      const uploaded = storage.saveSong(Buffer.from(await body.file.arrayBuffer()), extension);
-      const optimized = await optimizeSong({ storage, compressSong }, uploaded, extension);
-      repo.upsertSong({ templateId: template.id, slot, title, ...optimized });
-      if (previous) storage.removeSong(previous.file);
-      return backToSongs(c, template.id);
-    },
-  );
-
-  routes.post('/songs/:id/delete', (c) => {
-    const song = repo.getSong(Number(c.req.param('id')));
-    if (!song) return c.notFound();
-    repo.deleteSong(song.id);
-    storage.removeSong(song.file);
-    return c.redirect(`/admin/songs?ok=song-deleted&open=${song.templateId}#${song.templateId}`, 302);
+function registerStats(routes, { repo, now }) {
+  routes.get('/stats', (c) => {
+    const time = now();
+    const stats = repo.dashboardStats(time - STATS_DAYS * DAY_MS);
+    return c.html(statsPage({ batches: repo.listBatches(), stats, now: time }).value);
   });
 }
 
@@ -214,6 +233,8 @@ export function adminRoutes(deps) {
   const routes = new Hono();
   registerAuth(routes, deps);
   registerBatches(routes, deps);
-  registerSongs(routes, deps);
+  registerDeletion(routes, deps);
+  registerCards(routes, deps);
+  registerStats(routes, deps);
   return routes;
 }

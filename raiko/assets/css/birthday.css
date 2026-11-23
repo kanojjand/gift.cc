@@ -24,9 +24,10 @@
 .t-birthday .gate { gap: 14px; background: radial-gradient(circle at 50% 46%, var(--bg2), var(--bg) 72%); }
 .bd-gate-bg { position: absolute; inset: 0; pointer-events: none; }
 .bd-gate-bg .balloon { opacity: .7; }
-.bd-kicker { position: relative; z-index: 2; margin: 0; font: 800 13px/1 var(--font-head); letter-spacing: .26em; text-transform: uppercase; color: var(--accent); }
-.gift { position: relative; z-index: 3; display: block; width: min(60vw, 236px); aspect-ratio: 1 / 1.02; margin-top: 30px; animation: bd-wobble 2.6s ease-in-out infinite; }
-@keyframes bd-wobble { 0%, 70%, 100% { transform: none; } 76% { transform: rotate(-4deg) scale(1.03); } 82% { transform: rotate(4deg) scale(1.03); } 88% { transform: rotate(-2deg); } }
+.bd-kicker { position: relative; z-index: 2; max-width: 300px; margin: 0; font: 800 clamp(18px, 5vw, 22px)/1.3 var(--font-head); color: var(--ink); }
+.gift { position: relative; z-index: 3; display: block; width: min(60vw, 236px); aspect-ratio: 1 / 1.02; margin-top: 30px; transform-origin: 50% 100%; animation: bd-hop 2.2s ease-in-out infinite; }
+/* Коробка подпрыгивает, будто внутри что-то живое. */
+@keyframes bd-hop { 0%, 58%, 100% { transform: none; } 66% { transform: translateY(-16px) rotate(-3deg); } 74% { transform: scale(1.05, .94); } 82% { transform: translateY(-7px) rotate(2deg); } 90% { transform: scale(1.02, .98); } }
 .gift-box { position: absolute; left: 7%; right: 7%; bottom: 0; height: 64%; border-radius: 12px;
   background: linear-gradient(90deg, transparent 43%, var(--accent2) 43% 57%, transparent 57%),
     radial-gradient(circle, rgba(255, 255, 255, .35) 2.6px, transparent 3.2px) 0 0 / 22px 22px, var(--accent);
@@ -42,6 +43,7 @@
 .gift-bow .tail-l { right: 0; transform: rotate(26deg); transform-origin: top right; }
 .gift-bow .tail-r { left: 0; transform: rotate(-26deg); transform-origin: top left; }
 .gift-bow .knot { position: absolute; left: -13px; bottom: -12px; width: 26px; height: 24px; border-radius: 9px; background: color-mix(in srgb, var(--accent2) 78%, #000); }
+.bd-gate-sub { position: relative; z-index: 2; margin: -6px 0 0; font: 800 clamp(20px, 5.6vw, 26px)/1.2 var(--font-head); }
 .t-birthday .gate-title { margin: 8px 0 0; font-family: var(--font-name); font-weight: 400; font-size: clamp(38px, 11vw, 60px); line-height: 1.1; color: var(--accent); text-shadow: 3px 3px 0 var(--accent2); }
 .t-birthday .gate-hint { font: 700 13px/1.3 var(--font-head); letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
 
@@ -56,41 +58,61 @@
 .t-birthday .gate::after { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; background: radial-gradient(circle at 50% 58%, #fff, transparent 58%); opacity: 0; }
 .card.opening.t-birthday .gate::after { animation: bd-flash .9s ease .5s; }
 @keyframes bd-flash { 30% { opacity: .85; } }
-.card.opening :is(.bd-kicker, .t-birthday .gate-hint) { opacity: 0; transition: opacity .3s ease; }
+.card.opening :is(.bd-kicker, .bd-gate-sub, .t-birthday .gate-hint) { opacity: 0; transition: opacity .3s ease; }
 .card.opening.t-birthday .gate-title { transition: opacity .5s ease .6s; opacity: 0; }
 
-/* ---------- Приветствие ---------- */
-.t-birthday .scene-hello .panel > :not(.bd-stickers) { position: relative; z-index: 1; }
-.bd-stickers { position: absolute; top: -50px; left: -12px; width: calc(100% + 24px); pointer-events: none; }
-.bd-stickers .c1 { --c: var(--accent); } .bd-stickers .c2 { --c: var(--accent2); } .bd-stickers .c3 { --c: var(--accent3); }
-.bd-stickers :is(.s-star, .s-tri, .s-dot) { fill: var(--c); }
-.bd-stickers :is(.s-zig, .s-squiggle, .s-ring) { fill: none; stroke: var(--c); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-.bd-stickers :is(.s-star, .s-zig, .s-ring, .s-tri, .s-squiggle, .s-dot) { transform-box: fill-box; transform-origin: center; opacity: 0; }
-.scene.in .bd-stickers :is(.s-star, .s-zig, .s-ring, .s-tri, .s-squiggle, .s-dot) { animation: bd-pop .6s cubic-bezier(.3, 1.7, .5, 1) forwards; }
-.scene.in .bd-stickers > :nth-child(2n) { animation-delay: .25s; }
-.scene.in .bd-stickers > :nth-child(3n) { animation-delay: .45s; }
-@keyframes bd-pop { from { opacity: 0; transform: scale(0) rotate(-40deg); } to { opacity: 1; transform: none; } }
-.t-birthday .eyebrow { margin-bottom: 8px; font: 800 14px/1.2 var(--font-head); letter-spacing: .2em; text-transform: uppercase; color: var(--ink); opacity: 1; }
-.t-birthday .recipient { font-family: var(--font-name); font-weight: 400; font-size: clamp(56px, 17vw, 98px); line-height: 1.04; color: var(--accent); text-shadow: 4px 4px 0 var(--accent2); }
-.bd-divider { display: block; width: 130px; margin: 22px auto 0; fill: none; stroke: var(--accent3); stroke-width: 4; stroke-linecap: round; }
+/* ---------- Экран «С днём рождения!» и три маленьких подарка ---------- */
+.bd-hooray { gap: 8px; }
+.bd-hooray-title { margin: 0; font: 400 clamp(46px, 14vw, 76px)/1 var(--font-name); color: var(--accent); text-shadow: 4px 4px 0 var(--accent2); text-transform: uppercase; }
+.bd-hooray-sub { max-width: 320px; margin: 14px 0 18px; font: 700 18px/1.4 var(--font-body); }
+.bd-gifts { display: flex; justify-content: center; gap: 14px; width: 100%; }
+.mini-gift { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 96px; padding: 26px 0 0; -webkit-tap-highlight-color: transparent; }
+.mini-gift.c1 { --c: var(--accent); --r: var(--accent2); } .mini-gift.c2 { --c: var(--accent2); --r: var(--accent3); } .mini-gift.c3 { --c: var(--accent3); --r: var(--accent); }
+.mg-box { display: block; width: 74px; height: 58px; border-radius: 8px; background: linear-gradient(90deg, transparent 42%, var(--r) 42% 58%, transparent 58%), var(--c); box-shadow: inset -8px -6px 0 rgba(0, 0, 0, .1), 0 14px 22px -12px rgba(0, 0, 0, .5); }
+.mg-lid { position: absolute; top: 14px; left: 50%; width: 84px; height: 18px; margin-left: -42px; border-radius: 7px; background: linear-gradient(90deg, transparent 41%, var(--r) 41% 59%, transparent 59%), color-mix(in srgb, var(--c) 82%, #fff); transition: transform .5s cubic-bezier(.4, -.5, .5, 1.6); }
+.mg-lid::before { content: ''; position: absolute; bottom: 100%; left: 50%; width: 22px; height: 14px; margin-left: -11px; border: 5px solid var(--r); border-bottom: 0; border-radius: 12px 12px 0 0; }
+.mini-gift b { font: 800 14px/1.2 var(--font-head); color: var(--ink); }
+.mini-gift:not(.is-open) .mg-box { animation: bd-mini-hop 2.4s ease-in-out infinite; }
+.mini-gift.c2:not(.is-open) .mg-box { animation-delay: .4s; } .mini-gift.c3:not(.is-open) .mg-box { animation-delay: .8s; }
+@keyframes bd-mini-hop { 0%, 70%, 100% { transform: none; } 80% { transform: translateY(-6px); } }
+.mini-gift.is-open .mg-lid { transform: translate(14px, -30px) rotate(24deg); }
+.mini-gift:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 12px; }
+.bd-wishes { width: 100%; max-width: 380px; min-height: 120px; margin-top: 18px; }
+.bd-wish { margin: 0; padding: 16px 18px; border: 3px solid var(--ink); border-radius: 18px; background: var(--sticker); box-shadow: 5px 5px 0 var(--c, var(--accent)); font: 600 18px/1.45 var(--font-body); color: var(--ink); animation: bd-pop .45s cubic-bezier(.3, 1.7, .5, 1); }
+.bd-wish.c1 { --c: var(--accent); } .bd-wish.c2 { --c: var(--accent2); } .bd-wish.c3 { --c: var(--accent3); }
+.bd-wish b { font-family: var(--font-head); font-weight: 800; }
+@keyframes bd-pop { from { opacity: 0; transform: scale(.6) rotate(-6deg); } to { opacity: 1; transform: none; } }
 
-/* ---------- Текст: карточка-наклейка ---------- */
-.t-birthday .scene-message .panel { padding: 42px 24px 30px; border: 3px solid var(--ink); border-radius: 26px; background: var(--sticker); box-shadow: 8px 8px 0 var(--accent); transform: rotate(-1.2deg); }
+/* ---------- Личная карточка-наклейка ---------- */
+.bd-card { position: relative; width: 100%; max-width: 440px; padding: 46px 24px 30px; border: 3px solid var(--ink); border-radius: 26px; background: var(--sticker); box-shadow: 8px 8px 0 var(--accent); transform: rotate(-1.2deg); }
 .bd-popper { position: absolute; top: -46px; right: -16px; width: 88px; transform: rotate(10deg); }
 .bd-popper .cone { fill: var(--accent2); }
 .bd-popper .cone-stripe { fill: none; stroke: #fff; stroke-width: 4; opacity: .7; }
 .bd-popper .bit.c1 { fill: var(--accent); } .bd-popper .bit.c2 { fill: var(--accent3); } .bd-popper .bit.c3 { fill: var(--ink); }
-.t-birthday .message { font-family: var(--font-body); font-weight: 600; font-size: clamp(21px, 5.6vw, 26px); line-height: 1.45; color: var(--ink); }
-.t-birthday .message.long { font-size: clamp(18px, 4.8vw, 21px); }
+.bd-card-title { margin: 0 0 18px; font: 800 clamp(26px, 7.4vw, 34px)/1.15 var(--font-head); color: var(--accent); }
+.bd-card-title.long-name { font-size: clamp(22px, 6vw, 28px); }
+.t-birthday .message { font-family: var(--font-body); font-weight: 600; font-size: clamp(20px, 5.4vw, 24px); line-height: 1.45; color: var(--ink); }
+.t-birthday .message.long { font-size: clamp(17px, 4.6vw, 20px); }
 .t-birthday .signature { font-weight: 700; }
 .t-birthday .signature b { font-family: var(--font-head); font-weight: 800; font-size: 32px; color: var(--accent); }
+.bd-card-scene .hello-song { margin-top: 30px; }
 
-/* ---------- Фото: снимки на скотче ---------- */
-.t-birthday .section-title { font-family: var(--font-head); font-weight: 800; font-size: clamp(28px, 8vw, 38px); }
-.t-birthday .photos figure { position: relative; padding: 10px 10px 34px; border-radius: 6px; background: #fff; box-shadow: 0 16px 30px -14px rgba(0, 0, 0, .4); transform: rotate(-2.5deg); }
-.t-birthday .photos figure:nth-child(even) { transform: rotate(2.5deg); }
-.t-birthday .photos figure::before { content: ''; position: absolute; z-index: 1; top: -10px; left: 50%; width: 74px; height: 22px; margin-left: -37px; background: color-mix(in srgb, var(--accent3) 72%, transparent); transform: rotate(-4deg); }
-.t-birthday .photos img { aspect-ratio: 1; }
+/* ---------- Торт ---------- */
+.bd-cake-kicker { margin: 0 0 6px; font: 800 14px/1.3 var(--font-head); letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+.bd-cake-title { max-width: 320px; margin: 0 0 26px; font: 800 clamp(28px, 8vw, 38px)/1.15 var(--font-head); }
+.bd-cake-done { margin: 0; font: 400 clamp(34px, 10vw, 48px)/1.1 var(--font-name); color: var(--accent); text-shadow: 3px 3px 0 var(--accent2); animation: bd-pop .5s cubic-bezier(.3, 1.7, .5, 1); }
+
+/* ---------- Стена с полароидами: снимки на кнопках, листаются в сторону ---------- */
+.bd-wall-title { margin: 0 0 22px; font: 800 clamp(28px, 8vw, 38px)/1.15 var(--font-head); }
+.bd-wall { display: flex; gap: 18px; width: calc(100% + 56px); padding: 22px 28px 26px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent) 2px, transparent 2.5px) 0 0 / 26px 26px; }
+.bd-wall::-webkit-scrollbar { display: none; }
+.bd-wall[data-count="1"] { justify-content: center; }
+.bd-polaroid { position: relative; flex: 0 0 min(72%, 300px); margin: 0; padding: 10px 10px 36px; border-radius: 4px; background: #fff; box-shadow: 0 18px 32px -14px rgba(0, 0, 0, .45); rotate: var(--r); scroll-snap-align: center; }
+.bd-polaroid .photo-btn { width: 100%; aspect-ratio: 1; }
+.bd-pin { position: absolute; z-index: 1; top: -8px; left: 50%; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .8), transparent 30%), var(--c); box-shadow: 0 4px 6px rgba(0, 0, 0, .3); }
+.bd-pin.c1 { --c: var(--accent); } .bd-pin.c2 { --c: var(--accent2); } .bd-pin.c3 { --c: var(--accent3); }
+.bd-wall-scene .hello-song { margin-top: 26px; }
 
 /* ---------- Финал: торт, свечи задувают касанием ---------- */
 .cake-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 18px; }
@@ -116,6 +138,7 @@
 @keyframes bd-smoke { 0% { opacity: .8; } 100% { opacity: 0; transform: translate(10px, -56px) scale(3.2); } }
 .cake-hint { margin: 10px 0 0; font: 700 14px/1.3 var(--font-head); opacity: .7; }
 .card.blown .cake-hint { visibility: hidden; }
-.t-birthday .final-thanks { font-family: var(--font-name); font-weight: 400; color: var(--accent); text-shadow: 3px 3px 0 var(--accent2); }
+.t-birthday .final-thanks { max-width: 360px; font-family: var(--font-name); font-weight: 400; font-size: clamp(30px, 9vw, 42px); color: var(--accent); text-shadow: 3px 3px 0 var(--accent2); }
+.t-birthday .story-action { border: 3px solid var(--ink); background: var(--accent); color: #fff; font-family: var(--font-head); font-weight: 800; box-shadow: 4px 4px 0 var(--ink); }
 .t-birthday .thanks { border: 3px solid var(--ink); background: var(--accent2); color: var(--ink); font-family: var(--font-head); font-weight: 700; box-shadow: 4px 4px 0 var(--ink); }
 .t-birthday .next-btn { font-family: var(--font-head); font-weight: 700; }

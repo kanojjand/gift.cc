@@ -1,17 +1,17 @@
-/* Новый год «Снежный шар». Цвета приходят из палитры: --bg, --bg2, --ink, --accent (золото), --accent2 (красный), --accent3. */
+/* Новый год «Маленькое чудо». Цвета приходят из палитры: --bg, --bg2, --ink, --accent (золото), --accent2 (красный), --accent3 (лёд). */
 :root {
   --font-head: 'Noto Serif Display', Georgia, serif;
   --font-body: 'Montserrat', system-ui, sans-serif;
   --word-fx: wordBlur;
   --fx-color: #fff;
   --branch: #1f4d3d;
-  --glass-bg: rgba(255, 255, 255, .07);
-  --glass-line: rgba(255, 255, 255, .16);
+  --paper: #fbf6ec;
+  --paper-ink: #2a2620;
 }
-.t-newyear.tone-light { --fx-color: var(--accent3); --branch: #2d6a53; --glass-bg: rgba(255, 255, 255, .6); --glass-line: rgba(27, 42, 70, .12); }
+.t-newyear.tone-light { --fx-color: var(--accent3); --branch: #2d6a53; }
 
-/* ---------- Первый экран: снежный шар ---------- */
-.t-newyear .gate { gap: 12px; background: radial-gradient(120% 70% at 50% 0%, var(--bg2), var(--bg) 72%); }
+/* ---------- Экран 1: ожидание чуда ---------- */
+.t-newyear .gate { gap: 10px; background: radial-gradient(120% 70% at 50% 0%, var(--bg2), var(--bg) 72%); }
 .ny-sky { position: absolute; inset: 0; pointer-events: none; opacity: .75;
   background-image:
     radial-gradient(1.4px 1.4px at 12% 16%, var(--ink) 50%, transparent 52%), radial-gradient(1px 1px at 28% 8%, var(--ink) 50%, transparent 52%),
@@ -22,9 +22,13 @@
   animation: ny-twinkle 5s ease-in-out infinite alternate; }
 @keyframes ny-twinkle { to { opacity: .35; } }
 .ny-moon { position: absolute; top: 8%; right: 11%; width: 46px; height: 46px; border-radius: 50%; box-shadow: inset -11px 5px 0 0 var(--accent); transform: rotate(-20deg); filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 55%, transparent)); }
-.ny-kicker { position: relative; z-index: 2; margin: 0 0 6px; font: 600 11px/1 var(--font-body); letter-spacing: .34em; text-transform: uppercase; color: var(--accent); }
+.t-newyear .gate-title { margin: 0; font-style: italic; font-weight: 400; font-size: clamp(32px, 9vw, 46px); color: var(--ink); }
+.ny-lead { position: relative; z-index: 2; max-width: 300px; margin: 0 0 6px; font: italic 400 clamp(17px, 4.6vw, 20px)/1.45 var(--font-head); opacity: .85; }
+.t-newyear .gate-hint { font: 500 12px/1.4 var(--font-body); letter-spacing: .16em; text-transform: uppercase; opacity: .7; }
 
-.globe { position: relative; z-index: 3; display: grid; justify-items: center; width: min(72vw, 290px); padding: 0; animation: globe-idle 4.5s ease-in-out infinite; }
+/* Шар: стекло, сцена внутри, снег, блик, подставка с именем. */
+.globe { position: relative; z-index: 3; display: grid; justify-items: center; width: min(72vw, 290px); padding: 0; }
+.gate .globe { touch-action: none; animation: globe-idle 4.5s ease-in-out infinite; }
 @keyframes globe-idle { 50% { transform: translateY(-6px) rotate(-1.5deg); } }
 .globe-glass { position: relative; z-index: 2; display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; isolation: isolate;
   background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--bg2) 80%, #fff 10%), var(--bg) 78%);
@@ -38,27 +42,35 @@
 .globe-scene .ground, .globe-scene .roof-snow { fill: #fdfdff; }
 .globe-scene .wall { fill: color-mix(in srgb, var(--accent2) 78%, #000); }
 .globe-scene .roof { fill: color-mix(in srgb, var(--accent2) 55%, #000); }
-.globe-scene .window { fill: var(--accent); filter: drop-shadow(0 0 3px var(--accent)); animation: ny-window 3.4s ease-in-out infinite; }
-@keyframes ny-window { 50% { opacity: .7; } }
-.globe-scene .star { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
+/* До встряски окна тёмные, огоньков нет; после — свет в окнах, гирлянды на ёлках, звезда горит. */
+.globe-scene .window { fill: color-mix(in srgb, var(--accent) 18%, #15110c); transition: fill .5s ease .7s, filter .5s ease .7s; }
+.globe-scene .tree-lights circle { fill: var(--accent); opacity: 0; }
+.globe-scene .star { fill: color-mix(in srgb, var(--accent) 35%, #333); transition: fill .5s ease 1.1s, filter .5s ease 1.1s; }
+:is(.card.opening .gate, .globe.lit) .globe-scene .window { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
+:is(.card.opening .gate, .globe.lit) .globe-scene .star { fill: var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
+:is(.card.opening .gate, .globe.lit) .tree-lights circle { animation: ny-lights 1.4s ease-in-out calc(.8s + var(--i) * .12s) infinite alternate; }
+@keyframes ny-lights { from { opacity: .3; } to { opacity: 1; filter: drop-shadow(0 0 3px var(--accent)); } }
 .globe-snow { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .globe-snow i { position: absolute; top: -6%; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; background: #fff; opacity: .92; box-shadow: 0 0 4px rgba(255, 255, 255, .8); animation: ny-fall var(--d) linear var(--delay) infinite; }
 @keyframes ny-fall { to { transform: translate(16px, 330px); } }
-.globe-shine { position: absolute; inset: 0; z-index: 3; border-radius: 50%; background: radial-gradient(38% 22% at 32% 20%, rgba(255, 255, 255, .55), transparent 70%), radial-gradient(18% 10% at 72% 82%, rgba(255, 255, 255, .18), transparent 70%); }
-.globe-base { position: relative; z-index: 1; display: grid; place-items: center; width: 72%; height: 72px; margin-top: -13%; padding-top: 34px;
+.globe-shine { position: absolute; inset: 0; z-index: 3; border-radius: 50%; pointer-events: none; background: radial-gradient(38% 22% at 32% 20%, rgba(255, 255, 255, .55), transparent 70%), radial-gradient(18% 10% at 72% 82%, rgba(255, 255, 255, .18), transparent 70%); }
+.globe-base { position: relative; z-index: 1; display: grid; place-items: center; width: 72%; height: 72px; margin-top: -13%; padding: 34px 12% 0;
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 85%, #fff), color-mix(in srgb, var(--accent) 55%, #000));
   clip-path: polygon(9% 0, 91% 0, 100% 100%, 0 100%); border-radius: 0 0 12px 12px; box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .18); }
-.globe-base b { font: 600 14px/1 var(--font-body); letter-spacing: .34em; color: color-mix(in srgb, var(--accent) 25%, #000); }
-.t-newyear .gate-title { margin: 6px 0 0; font-style: italic; font-weight: 400; font-size: clamp(34px, 10vw, 52px); color: var(--ink); }
-.t-newyear .gate-hint { font: 500 12px/1.4 var(--font-body); letter-spacing: .16em; text-transform: uppercase; opacity: .7; }
+.globe-base b { display: block; max-width: 100%; overflow: hidden; font: italic 600 15px/1.2 var(--font-head); letter-spacing: .06em; white-space: nowrap; text-overflow: ellipsis; color: color-mix(in srgb, var(--accent) 22%, #000); text-shadow: 0 1px 0 rgba(255, 255, 255, .35); }
 
-/* Открытие: шар трясёт, снег закручивается, камера влетает внутрь шара. */
-.card.opening .globe { animation: ny-shake .75s ease-in-out, ny-zoom 1.3s cubic-bezier(.7, 0, .3, 1) .85s forwards; }
+/* ---------- Экран 2: волшебство — шар трясёт, снег закручивается бурей, потом успокаивается ---------- */
+.card.opening .gate .globe { animation: ny-shake .7s ease-in-out 2; }
 @keyframes ny-shake { 15% { transform: rotate(-10deg) translateX(-10px); } 35% { transform: rotate(9deg) translateX(9px); } 55% { transform: rotate(-7deg) translateX(-6px); } 75% { transform: rotate(5deg) translateX(4px); } }
-@keyframes ny-zoom { to { transform: scale(6); opacity: 0; } }
-.card.opening .globe-snow i { animation: ny-swirl 1.1s ease-in-out var(--delay) infinite alternate; }
+.card.opening .gate .globe-snow i { animation: ny-swirl .9s ease-in-out var(--delay) 2 alternate, ny-fall var(--d) linear 1.8s infinite; }
 @keyframes ny-swirl { from { transform: translate(-30px, 60px); } to { transform: translate(40px, 210px) scale(1.4); } }
-.card.opening :is(.ny-kicker, .t-newyear .gate-title, .t-newyear .gate-hint, .ny-moon) { opacity: 0; transition: opacity .45s ease; }
+.card.opening .gate :is(.gate-title, .ny-lead, .gate-hint, .ny-moon) { opacity: 0; transition: opacity .45s ease; }
+
+.ny-magic { gap: 18px; }
+.globe-still { width: min(66vw, 270px); }
+.ny-hello { margin: 6px 0 0; font-family: var(--font-head); font-weight: 400; line-height: 1.05; }
+.ny-hello-line { display: block; margin-bottom: 10px; font: 600 13px/1.4 var(--font-body); letter-spacing: .32em; text-transform: uppercase; color: var(--accent); }
+.ny-hello .recipient { display: block; font-style: italic; font-size: clamp(48px, 14vw, 78px); color: var(--ink); text-shadow: 0 0 44px color-mix(in srgb, var(--accent) 35%, transparent); }
 
 /* ---------- Фон сцен ---------- */
 .t-newyear .backdrop { background: radial-gradient(120% 60% at 50% 0%, var(--bg2), var(--bg) 72%); }
@@ -66,55 +78,63 @@
 .ny-garland .wire { fill: none; stroke: color-mix(in srgb, var(--ink) 40%, transparent); stroke-width: 1.4; }
 .ny-garland .cap { fill: color-mix(in srgb, var(--ink) 55%, transparent); }
 .ny-garland .bulb { animation: ny-bulb 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * -.41s); }
-.ny-garland .b0 { fill: var(--accent); } .ny-garland .b1 { fill: var(--accent2); } .ny-garland .b2 { fill: var(--accent3); }
+.ny-garland .b0, .ft-light.b0 { fill: var(--accent); }
+.ny-garland .b1, .ft-light.b1 { fill: var(--accent2); }
+.ny-garland .b2, .ft-light.b2 { fill: var(--accent3); }
 @keyframes ny-bulb { 0%, 100% { opacity: .4; } 50% { opacity: 1; filter: brightness(1.35) drop-shadow(0 0 5px rgba(255, 255, 255, .7)); } }
 .ny-glow { position: absolute; left: 50%; bottom: -34vh; width: 130vw; height: 64vh; transform: translateX(-50%); background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent); }
-
-/* ---------- Приветствие ---------- */
-.ny-year { margin: 0 0 4px; font: 600 clamp(70px, 24vw, 128px)/.9 var(--font-head); letter-spacing: .02em; color: transparent;
-  -webkit-text-stroke: 1.3px color-mix(in srgb, var(--accent) 85%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 38%, transparent), transparent 85%); -webkit-background-clip: text; background-clip: text;
-  opacity: 0; transform: translateY(18px) scale(.96); }
-.scene.in .ny-year { animation: ny-rise 1.3s cubic-bezier(.2, .8, .2, 1) forwards; }
-@keyframes ny-rise { to { opacity: 1; transform: none; } }
-.t-newyear .eyebrow { margin-bottom: 12px; font: 600 12px/1.3 var(--font-body); letter-spacing: .32em; text-transform: uppercase; color: var(--accent); opacity: 1; }
-.t-newyear .recipient { font-style: italic; font-weight: 400; font-size: clamp(56px, 17vw, 92px); line-height: 1.04; color: var(--ink); text-shadow: 0 0 44px color-mix(in srgb, var(--accent) 35%, transparent); }
 .ny-divider { display: flex; align-items: center; gap: 12px; width: 190px; margin: 26px auto 0; color: var(--accent); }
 .ny-divider i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
 .ny-divider i:last-child { transform: scaleX(-1); }
 .ny-flake { width: 22px; height: 22px; flex: none; animation: ny-spin 14s linear infinite; }
 @keyframes ny-spin { to { transform: rotate(360deg); } }
 
-/* ---------- Текст ---------- */
-.t-newyear :is(.scene-message, .scene-closing) .panel { padding: 64px 24px 34px; border: 1px solid var(--glass-line); border-radius: 28px; background: var(--glass-bg); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 30px 60px -32px rgba(0, 0, 0, .55); }
-.t-newyear .scene-closing .panel { padding-top: 34px; }
-.ny-bauble { position: absolute; top: -78px; left: 50%; width: 62px; margin-left: -31px; transform-origin: 50% 0; animation: ny-swing 3.8s ease-in-out infinite; }
-@keyframes ny-swing { 50% { transform: rotate(7deg); } }
-.ny-bauble .string { stroke: color-mix(in srgb, var(--ink) 50%, transparent); stroke-width: 1.5; }
-.ny-bauble .cap { fill: var(--accent); }
-.ny-bauble .ball { fill: var(--accent2); }
-.ny-bauble .band { fill: var(--accent); opacity: .9; }
-.ny-bauble .shine { fill: #fff; opacity: .45; }
-.t-newyear .message { font-family: var(--font-head); font-size: clamp(22px, 6vw, 29px); line-height: 1.45; }
-.t-newyear .message.long { font-size: clamp(19px, 5vw, 23px); }
-.t-newyear .signature { font: 500 14px/1.4 var(--font-body); letter-spacing: .14em; text-transform: uppercase; opacity: .9; }
-.t-newyear .signature b { font-family: var(--font-head); font-style: italic; font-size: 36px; letter-spacing: 0; text-transform: none; color: var(--accent); }
+/* ---------- Экран 3: письмо под ёлкой ---------- */
+.ny-letter { position: relative; width: 100%; max-width: 440px; padding: 70px 26px 34px; border-radius: 6px; background: var(--paper); color: var(--paper-ink); box-shadow: 0 30px 60px -26px rgba(0, 0, 0, .6); rotate: -1deg; }
+.ny-letter::after { content: ''; position: absolute; top: 0; right: 0; border-width: 0 30px 30px 0; border-style: solid; border-color: var(--bg) var(--bg) color-mix(in srgb, var(--paper) 80%, #000) color-mix(in srgb, var(--paper) 80%, #000); border-radius: 0 0 0 4px; }
+.ny-letter-branch { top: -52px !important; left: -30px !important; width: min(58%, 230px) !important; color: var(--branch); stroke-width: 2.6; }
+.ny-letter-flake { position: absolute; top: 18px; right: 46px; width: 26px; color: color-mix(in srgb, var(--accent3) 70%, #5a7ea8); }
+.ny-letter-flake .ny-flake { width: 26px; height: 26px; }
+.ny-letter-kicker { margin: 0 0 18px; font: 600 11px/1.4 var(--font-body); letter-spacing: .3em; text-transform: uppercase; color: color-mix(in srgb, var(--accent2) 85%, #000); }
+.ny-letter .message { font-family: var(--font-head); font-size: clamp(20px, 5.4vw, 25px); line-height: 1.5; color: var(--paper-ink); }
+.ny-letter .message.long { font-size: clamp(17px, 4.6vw, 20px); }
+.ny-letter .signature { font: 500 13px/1.4 var(--font-body); letter-spacing: .14em; text-transform: uppercase; }
+.ny-letter .signature b { font-family: var(--font-head); font-style: italic; font-size: 34px; letter-spacing: 0; text-transform: none; color: color-mix(in srgb, var(--accent2) 85%, #000); }
+.ny-letter-scene .hello-song { margin-top: 34px; }
 
-/* ---------- Фото ---------- */
-.t-newyear .scene-photos > .ny-flake { width: 34px; height: 34px; margin-bottom: 14px; color: var(--accent); }
-.t-newyear .section-title { font-style: italic; }
-.t-newyear .photos img { border: 6px solid color-mix(in srgb, var(--ink) 94%, transparent); border-radius: 18px; box-shadow: 0 22px 44px -20px rgba(0, 0, 0, .6); }
+/* ---------- Экран 4: воспоминания внутри шара ---------- */
+.ny-title { margin: 0 0 18px; font: italic 400 clamp(34px, 9vw, 46px)/1.1 var(--font-head); }
+.ny-memory-globe { position: relative; width: min(86vw, 360px); aspect-ratio: 1; margin: 0 auto 16px; }
+.ny-mg-glass { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--bg2) 80%, #fff 10%), var(--bg) 78%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .38), inset -20px -26px 44px rgba(0, 0, 0, .34), 0 30px 60px -24px rgba(0, 0, 0, .6), 0 0 80px -12px color-mix(in srgb, var(--accent) 40%, transparent); }
+.ny-memory-globe .globe-snow { z-index: 3; overflow: hidden; border-radius: 50%; }
+.ny-memory-globe .globe-shine { z-index: 4; }
+.ny-window { position: absolute; z-index: 2; left: var(--x); top: var(--y); width: var(--w); aspect-ratio: 1; padding: 0; translate: -50% -50%; overflow: hidden; border: 3px solid color-mix(in srgb, var(--accent) 80%, #fff); border-radius: 50%; background: var(--bg); cursor: zoom-in;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, .18), 0 0 26px color-mix(in srgb, var(--accent) 55%, transparent); animation: ny-window-glow 3s ease-in-out calc(var(--i) * .4s) infinite alternate; }
+.ny-window img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes ny-window-glow { to { box-shadow: 0 0 0 4px rgba(0, 0, 0, .18), 0 0 40px color-mix(in srgb, var(--accent) 80%, transparent); } }
+.ny-note { margin: 0 0 8px; font: 500 12px/1.4 var(--font-body); letter-spacing: .16em; text-transform: uppercase; opacity: .7; }
+.ny-memories .hello-song { margin-top: 18px; }
+/* Увеличенное фото: вокруг медленно кружится снег. */
+.t-newyear .photo-lightbox::before { content: ''; position: fixed; inset: 0; pointer-events: none; opacity: .8;
+  background-image: radial-gradient(2.5px 2.5px at 12% 18%, #fff 50%, transparent 52%), radial-gradient(2px 2px at 30% 72%, #fff 50%, transparent 52%), radial-gradient(3px 3px at 52% 34%, #fff 50%, transparent 52%),
+    radial-gradient(2px 2px at 74% 12%, #fff 50%, transparent 52%), radial-gradient(2.5px 2.5px at 88% 58%, #fff 50%, transparent 52%), radial-gradient(2px 2px at 8% 88%, #fff 50%, transparent 52%), radial-gradient(3px 3px at 64% 92%, #fff 50%, transparent 52%);
+  background-size: 100% 50%; animation: ny-lightbox-snow 9s linear infinite; }
+@keyframes ny-lightbox-snow { to { background-position: 30px 100%; } }
 
-/* ---------- Финал ---------- */
-.ny-glasses { width: 150px; margin-bottom: 6px; }
-.ny-glasses .bowl { fill: rgba(255, 255, 255, .12); stroke: color-mix(in srgb, var(--ink) 80%, transparent); stroke-width: 2; }
-.ny-glasses .drink { fill: var(--accent); opacity: .88; }
-.ny-glasses .stem { fill: none; stroke: color-mix(in srgb, var(--ink) 80%, transparent); stroke-width: 2.4; stroke-linecap: round; }
-.ny-glasses .clink path { stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; opacity: 0; }
-.scene.in .ny-glasses .clink path { animation: ny-clink 2.6s ease-out infinite; }
-@keyframes ny-clink { 0%, 60% { opacity: 0; } 70% { opacity: 1; } 100% { opacity: 0; } }
-.ny-glasses .bubble { fill: #fff; opacity: 0; animation: ny-bubble 2.4s ease-in infinite; animation-delay: calc(var(--i) * .4s); }
-@keyframes ny-bubble { 20% { opacity: .9; } 100% { transform: translateY(-34px); opacity: 0; } }
-.t-newyear .final-thanks { font-style: italic; font-size: clamp(30px, 8.6vw, 42px); }
-.t-newyear .thanks { background: var(--accent); color: color-mix(in srgb, var(--accent) 20%, #000); font-family: var(--font-body); font-weight: 600; }
+/* ---------- Финал: звезда на ёлке ---------- */
+.ny-final-tree { width: min(56vw, 220px); margin-bottom: 10px; overflow: visible; }
+.ft-tree { fill: var(--branch); }
+.ft-trunk { fill: #6b4529; }
+.ft-light { opacity: .45; animation: ny-bulb 2.4s ease-in-out calc(var(--i) * -.37s) infinite; }
+.ft-star { fill: var(--accent); opacity: .3; }
+.ft-glow { fill: var(--accent); opacity: 0; filter: blur(14px); }
+.scene.in .ft-star { animation: ny-star-on 1s ease .7s forwards; }
+.scene.in .ft-glow { animation: ny-glow-on 1.4s ease .7s forwards; }
+@keyframes ny-star-on { to { opacity: 1; filter: drop-shadow(0 0 8px var(--accent)); } }
+@keyframes ny-glow-on { to { opacity: .55; } }
+.t-newyear .final-thanks { font-style: italic; font-size: clamp(28px, 8vw, 40px); }
+.ny-wish-done { margin: -10px 0 18px; font: italic 400 21px/1.3 var(--font-head); color: var(--accent); }
+.t-newyear .story-action { background: var(--accent); color: color-mix(in srgb, var(--accent) 20%, #000); font-family: var(--font-body); font-weight: 600; }
+.t-newyear .thanks { border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent); background: transparent; color: var(--ink); font-family: var(--font-body); }
 .t-newyear .next-btn { font-family: var(--font-body); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }

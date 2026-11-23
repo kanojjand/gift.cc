@@ -136,10 +136,9 @@ export function renderBackdrop(templateId) {
  */
 export function renderSceneDecor(templateId, scene, data) {
   const decor = getTheme(templateId)?.decor ?? SCENE_DECOR[templateId];
-  return decor[scene]?.(data) ?? '';
+  return decor?.[scene]?.(data) ?? '';
 }
 
 export function closingLine(templateId, data) {
-  const theme = getTheme(templateId);
-  return theme ? theme.closingLine(data) : CLOSING_LINES[templateId];
+  return getTheme(templateId)?.closingLine?.(data) ?? CLOSING_LINES[templateId];
 }

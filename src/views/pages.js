@@ -1,20 +1,31 @@
-import { BRAND, whatsappLink } from '../brand.js';
-import { CATALOG, TIERS } from '../tiers.js';
+import { BRAND, MARK, whatsappLink } from '../brand.js';
+import { CATALOG, MAX_PHOTOS } from '../tiers.js';
 import { asset } from './assets.js';
 import { html, raw } from './html.js';
-
-const MARK_PATHS = `<path d="M229.8 1L320.2 79V135.6H278V97.8L229.1 55.8L119.6 143.2V207.5L216.3 290.2L278 240.6V206.1H320.2V260L215.5 344.5L75.6 226.2V125.8Z"/><path d="M92 0.3L147.9 47.8L115.5 74.7L92.4 55.1L43 96.1V250.9L89.5 290.6L110.1 274.4L140.9 300.7L88.4 344.6L0.3 269.3V77.7Z"/><path d="M219 123.8L229.9 163.8L269 175.2L230.2 186.7L219 226.5L208.1 186.9L167.8 175.2L208.1 164.1Z"/>`;
 
 export const brandFonts = html`<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@600&display=swap">`;
 
 export function brandMark() {
-  return raw(`<svg class="mark" viewBox="0 0 321 345" fill="currentColor" aria-hidden="true">${MARK_PATHS}</svg>`);
+  return raw(`<svg class="mark" viewBox="0 0 ${MARK.width} ${MARK.height}" fill="currentColor" aria-hidden="true">${MARK.paths}</svg>`);
 }
 
 export function brandLockup(href = '/') {
   return html`<a class="brand" href="${href}" aria-label="${BRAND.name}">${brandMark()}<span class="brand-name">${BRAND.name}<small>Code Collective Laboratory</small></span></a>`;
+}
+
+/** Кнопка темы: луна в светлой теме, солнце в тёмной. Подпись постоянная, включена ли тёмная тема, говорит aria-pressed. */
+export function themeToggle() {
+  return raw(`<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Тёмная тема">
+<svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>
+<svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.4"/><path d="M12 1.8v2.6M12 19.6v2.6M1.8 12h2.6M19.6 12h2.6M4.8 4.8l1.8 1.8M17.4 17.4l1.8 1.8M4.8 19.2l1.8-1.8M17.4 6.6l1.8-1.8"/></svg>
+</button>`);
+}
+
+/** Верх страниц покупателя: логотип и переключатель темы. */
+export function topBar() {
+  return html`<div class="top-bar">${brandLockup()}${themeToggle()}</div>`;
 }
 
 /**
@@ -36,7 +47,13 @@ ${head}
 </html>`;
 }
 
-const appCss = html`${brandFonts}<link rel="stylesheet" href="${asset('css/app.css')}">`;
+/**
+ * Шапка страниц покупателя. theme.js подключён без defer: он ставит тему до отрисовки, иначе страница мигнёт.
+ * По умолчанию тема светлая, тёмную покупатель включает кнопкой, выбор запоминается на устройстве.
+ */
+export const appHead = html`${brandFonts}<script src="${asset('js/theme.js')}"></script><link rel="stylesheet" href="${asset('css/app.css')}">`;
+/** Цвет панели браузера на страницах покупателя до запуска theme.js (светлая тема по умолчанию). */
+export const APP_BAR_COLOR = '#f6f4ef';
 
 export function contactLinks() {
   return html`
@@ -49,7 +66,8 @@ export function contactLinks() {
 function messagePage(title, text) {
   return documentPage({
     title,
-    head: appCss,
+    head: appHead,
+    themeColor: APP_BAR_COLOR,
     bodyClass: 'centered',
     body: html`<main class="notice-card">
       ${brandLockup()}
@@ -62,7 +80,7 @@ function messagePage(title, text) {
 
 export function goneInfo(status) {
   if (status === 'blocked') return messagePage('Открытка недоступна', 'Эта открытка снята с публикации.');
-  return messagePage('Срок открытки закончился', 'Поздравления хранятся неделю после активации. Эта открытка и её фото уже удалены.');
+  return messagePage('Срок открытки закончился', 'Срок хранения этой открытки закончился, она и её фото уже удалены.');
 }
 
 export function notFoundPage() {
@@ -80,19 +98,17 @@ const templateLink = (template) => html`
   </a>`;
 
 export function landingPage() {
-  const group = (tier) => CATALOG.filter((template) => template.tier === tier).map(templateLink);
   return documentPage({
     title: `${BRAND.name}: QR-поздравления`,
-    head: appCss,
+    head: appHead,
+    themeColor: APP_BAR_COLOR,
     body: html`<main class="landing">
       ${brandLockup()}
       <p class="eyebrow">${BRAND.tagline}</p>
       <h1>Поздравление, которое живёт внутри букета</h1>
       <p class="lead">QR-код на открытке открывает страницу с именем, словами, фото и музыкой.</p>
-      <h2>Базовые шаблоны, до ${TIERS.basic.maxPhotos} фото</h2>
-      <div class="tpl-list">${group('basic')}</div>
-      <h2>Премиум, до ${TIERS.premium.maxPhotos} фото</h2>
-      <div class="tpl-list">${group('premium')}</div>
+      <h2>Шаблоны, до ${MAX_PHOTOS} фото</h2>
+      <div class="tpl-list">${CATALOG.map(templateLink)}</div>
       <nav class="contact-row">${contactLinks()}</nav>
     </main>`,
   });

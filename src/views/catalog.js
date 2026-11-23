@@ -1,8 +1,7 @@
-import { TIERS } from '../tiers.js';
-import { asset } from './assets.js';
+import { MAX_PHOTOS } from '../tiers.js';
 import { stepsBar } from './form.js';
 import { html, raw } from './html.js';
-import { brandFonts, brandLockup, documentPage } from './pages.js';
+import { APP_BAR_COLOR, appHead, documentPage, topBar } from './pages.js';
 
 /** Маленькие картинки шаблонов на карточках каталога. Цвета берутся из первой палитры через CSS-переменные. */
 const ICONS = Object.freeze({
@@ -34,18 +33,17 @@ function catalogCard(template, code) {
 }
 
 /**
- * @param {{ card: { code: string, tier: string }, templates: object[] }} input
+ * @param {{ card: { code: string }, templates: object[] }} input
  */
 export function renderCatalog({ card, templates }) {
-  const tier = TIERS[card.tier];
-  const photos = tier.maxPhotos > 1 ? `до ${tier.maxPhotos} фото` : '1 фото';
   return documentPage({
     title: 'Выберите открытку',
-    head: html`${brandFonts}<link rel="stylesheet" href="${asset('css/app.css')}">`,
+    head: appHead,
+    themeColor: APP_BAR_COLOR,
     body: html`<main class="catalog">
-      ${brandLockup()}
+      ${topBar()}
       ${stepsBar(1)}
-      <p class="eyebrow">${tier.label} код · ${photos} · музыка</p>
+      <p class="eyebrow">Все шаблоны · до ${MAX_PHOTOS} фото · музыка</p>
       <h1>Выберите открытку</h1>
       <p class="catalog-sub">Нажмите на картинку, чтобы посмотреть, как открытка откроется у получателя. Цвет выберете на следующем шаге.</p>
       <div class="cat-grid">${templates.map((template) => catalogCard(template, card.code))}</div>

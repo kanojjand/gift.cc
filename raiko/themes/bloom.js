@@ -1,6 +1,12 @@
 import { html, raw } from '../../src/views/html.js';
+import { finalActions, letter, photoButton } from '../story.js';
 
-/** Цветение: бутон раскрывается в цветок, открытка свёрстана как журнал о флористике. */
+/**
+ * «Цветение» — особый выпуск журнала о человеке. Сценарий: обложка «Special edition, посвящается Имя» и бутон →
+ * касание раскрывает цветок → «Этот выпуск — о тебе» → статья «Немного о главном» с поздравлением →
+ * «Моменты»: развороты с фото листаются в сторону, композиция меняется → последняя страница: расцветающий сад,
+ * пожелание и «Перечитать этот выпуск».
+ */
 
 const range = (count) => Array.from({ length: count }, (_, i) => i);
 const BUD_TILT = 0.125;
@@ -66,34 +72,91 @@ const SPRIG = raw(`<svg class="bl-sprig" viewBox="0 0 220 60" aria-hidden="true"
   }).join('')}
 </svg>`);
 
-const BOUQUET = raw(`<svg class="bl-bouquet" viewBox="-100 -90 200 190" aria-hidden="true">
-  <path class="b-stem" d="M-30 0 L-4 92 M0 -10 L0 92 M34 2 L6 92"/>
-  ${smallFlower(-34, -8, 1, 'c2')}${smallFlower(36, -2, 0.9, 'c3')}${smallFlower(0, -34, 1.15, 'c1')}
-  <path class="b-wrap" d="M-34 50 L34 50 L14 96 L-14 96Z"/>
-</svg>`);
-
 const OUTLINE = (className) => raw(`<svg class="bl-outline ${className}" viewBox="-120 -120 240 240" aria-hidden="true">
   ${range(9).map((i) => `<path transform="rotate(${i * 40})" d="${petalPath(110, 44)}"/>`).join('')}
   ${range(6).map((i) => `<path transform="rotate(${i * 60 + 20})" d="${petalPath(70, 30)}"/>`).join('')}
 </svg>`);
 
+/** Сад на последней странице: цветы на стеблях вырастают по очереди. x, высота стебля, размер цветка, цвет. */
+const GARDEN = [[30, 70, 0.55, 'c2'], [62, 96, 0.75, 'c1'], [98, 60, 0.5, 'c3'], [130, 110, 0.85, 'c1'], [164, 74, 0.6, 'c2'], [196, 92, 0.7, 'c3'], [226, 62, 0.5, 'c1']];
+const GARDEN_SVG = raw(`<svg class="bl-garden reveal" viewBox="0 0 256 146" aria-hidden="true">
+  ${GARDEN.map(([x, height, scale, color], i) => `<g class="bl-grow" style="--i:${i}"><path class="g-stem" d="M${x} 146 C${x - 7} ${146 - height / 2} ${x + 7} ${146 - height / 2} ${x} ${146 - height}"/>${smallFlower(x, 146 - height, scale, color)}</g>`).join('')}
+</svg>`);
+
+/** Развороты «Моментов»: одно фото — на всю страницу, два — рядом. Для 1-5 фото, номера фото по порядку. */
+const SPREAD_PLANS = { 1: [[0]], 2: [[0, 1]], 3: [[0], [1, 2]], 4: [[0], [1, 2], [3]], 5: [[0], [1, 2], [3, 4]] };
+const frameLabel = (i) => `Кадр ${String(i + 1).padStart(2, '0')}`;
+const pageHead = (page) => html`<header class="bl-page-head" aria-hidden="true"><span>Цветение · Выпуск № 01</span><span>стр. ${String(page).padStart(2, '0')}</span></header>`;
+
+function headlineScene(page) {
+  return html`<section class="scene bl-page bl-headline">
+    ${pageHead(page)}
+    <p class="bl-kicker reveal">Special edition</p>
+    <h1 class="bl-headline-title reveal">Этот выпуск — о тебе.</h1>
+    <div class="reveal">${SPRIG}</div>
+    <p class="scroll-hint reveal">Листай</p>
+  </section>`;
+}
+
+function articleScene(page, { recipient, message, sender, song }) {
+  return html`<section class="scene bl-page bl-article">
+    ${pageHead(page)}
+    <p class="bl-kicker reveal">Немного о главном</p>
+    <h2 class="bl-article-title reveal">${recipient}</h2>
+    <span class="bl-quote reveal" aria-hidden="true">“</span>
+    ${letter({ message, from: 'С теплом,', sender })}
+    ${song}
+  </section>`;
+}
+
+function momentsScene(page, photoUrls, song) {
+  const spreads = SPREAD_PLANS[photoUrls.length].map((indexes) => indexes.map((i) => ({ url: photoUrls[i], i })));
+  return html`<section class="scene bl-page bl-moments">
+    ${pageHead(page)}
+    <p class="bl-kicker reveal">Моменты</p>
+    <div class="bl-spreads reveal">
+      ${spreads.map((spread, s) => html`<div class="bl-spread bl-spread-${spread.length}">
+        ${spread.map(({ url, i }) => html`<figure class="bl-shot">${photoButton(url, i, photoUrls.length)}<figcaption>${frameLabel(i)}</figcaption></figure>`)}
+        <span class="bl-spread-no" aria-hidden="true">${s + 1} / ${spreads.length}</span>
+      </div>`)}
+    </div>
+    ${spreads.length > 1 ? html`<p class="swipe-hint reveal">Листай страницы в сторону</p>` : ''}
+    ${song}
+  </section>`;
+}
+
+function lastPageScene(page, { from, sender }) {
+  return html`<section class="scene bl-page bl-last scene-closing">
+    ${pageHead(page)}
+    ${GARDEN_SVG}
+    <p class="bl-kicker reveal">Пожелание</p>
+    <p class="final-thanks reveal">Жизнь не обязана быть идеальной, чтобы быть прекрасной.</p>
+    <p class="bl-last-sub reveal">Пусть у тебя будет много причин расцветать снова и снова.</p>
+    <p class="signature reveal"><span>${from}</span> <b>${sender}</b></p>
+    ${finalActions({ sender, action: { id: 'reread', label: 'Перечитать этот выпуск' } })}
+  </section>`;
+}
+
 export default {
   gate: ({ recipient }) => html`
-    <p class="bl-mast" aria-hidden="true"><span>Цветение</span><i></i><span>№ 01</span></p>
+    <p class="bl-mast" aria-hidden="true"><span>Special edition</span><i></i><span>Выпуск № 01</span></p>
+    <p class="bl-dedication">Посвящается</p>
     <p class="gate-title">${recipient}</p>
-    <button class="gate-btn bud" type="button" aria-label="Раскрыть бутон">${FLOWER}</button>
-    <p class="gate-hint">Коснись бутона</p>`,
+    <button class="gate-btn bud" type="button" aria-label="Коснуться цветка">${FLOWER}</button>
+    <p class="bl-cover-line">Некоторые люди делают этот мир красивее просто тем, что в нём есть.</p>
+    <p class="gate-hint">Коснись цветка</p>`,
 
   backdrop: () => html`${OUTLINE('o1')}${OUTLINE('o2')}`,
 
-  decor: {
-    hello: () => html`<p class="bl-mast bl-mast-small" aria-hidden="true"><span>Для тебя</span><i></i><span>Выпуск о главном</span></p>`,
-    message: () => html`<span class="bl-quote" aria-hidden="true">“</span>`,
-    photos: () => raw(`<svg class="bl-mini" viewBox="-40 -40 80 80" aria-hidden="true">${smallFlower(0, 0, 1, 'c1')}</svg>`),
-    closing: () => BOUQUET,
+  /** Страницы журнала с номерами. Песня — на развороте с фото, а без фото — под статьёй. */
+  story: ({ recipient, sender, message, photoUrls, from, song }) => {
+    const hasPhotos = photoUrls.length > 0;
+    return html`
+      ${headlineScene(2)}
+      ${articleScene(3, { recipient, message, sender, song: hasPhotos ? '' : song })}
+      ${hasPhotos ? momentsScene(4, photoUrls, song) : ''}
+      ${lastPageScene(hasPhotos ? 5 : 4, { from, sender })}`;
   },
 
   divider: () => SPRIG,
-
-  closingLine: () => 'Пусть всё цветёт',
 };

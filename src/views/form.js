@@ -1,8 +1,9 @@
 import { LIMITS } from '../config.js';
 import { asset } from './assets.js';
 import { html } from './html.js';
-import { brandFonts, brandLockup, documentPage } from './pages.js';
-import { occasionsForTier, suggestedOccasion, TEXT_LANGS } from '../texts.js';
+import { APP_BAR_COLOR, appHead, documentPage, topBar } from './pages.js';
+import { OCCASION_TEXTS, suggestedOccasion, TEXT_LANGS } from '../texts.js';
+import { MAX_PHOTOS } from '../tiers.js';
 import { MUSIC_LINK_MAX_LENGTH, musicEmbed, parseMusicLink, startParts } from '../../public/js/music-link.js';
 
 const LANG_LABELS = Object.freeze({ ru: 'Рус', kk: 'Қаз' });
@@ -56,12 +57,11 @@ function paletteField(template, selectedId) {
   </fieldset>`;
 }
 
-/** Готовые тексты: язык, повод и три варианта. Выбранный текст попадает в поле, его можно поправить. */
-function textPicker(tierId, occasions, current) {
-  const premium = tierId === 'premium';
-  return html`<div id="text-picker" class="text-picker${premium ? ' is-premium' : ''}" data-lang="ru" data-occ="${current}">
+/** Готовые тексты: язык, повод и варианты (сначала короткие, потом развёрнутые). Выбранный текст попадает в поле, его можно поправить. */
+function textPicker(occasions, current) {
+  return html`<div id="text-picker" class="text-picker" data-lang="ru" data-occ="${current}">
     <div class="tp-head">
-      <span class="tp-title">${premium ? 'Премиум-тексты' : 'Готовые тексты'}</span>
+      <span class="tp-title">Готовые тексты</span>
       <div class="tp-lang" role="group" aria-label="Язык готовых текстов">
         ${TEXT_LANGS.map((lang) => html`<button type="button" data-lang="${lang}" aria-pressed="${lang === 'ru' ? 'true' : 'false'}">${LANG_LABELS[lang]}</button>`)}
       </div>
@@ -79,17 +79,16 @@ function textPicker(tierId, occasions, current) {
   </div>`;
 }
 
-function photoField(maxPhotos, card) {
+function photoField(card) {
   const existing = card.photos.map((name) => ({ name, url: `/media/p/${card.code}/${name}` }));
-  const label = maxPhotos > 1 ? `Фото, до ${maxPhotos} шт. (по желанию)` : 'Фото (по желанию)';
   return html`<fieldset class="field">
-    <legend>${label}</legend>
-    <div id="photo-list" class="photo-list" data-max="${maxPhotos}">
+    <legend>Фото, до ${MAX_PHOTOS} шт. (по желанию)</legend>
+    <div id="photo-list" class="photo-list" data-max="${MAX_PHOTOS}">
       ${existing.map(({ name, url }) => html`<div class="thumb" data-keep="${name}">
         <img src="${url}" alt=""><button type="button" class="thumb-x" aria-label="Убрать фото">×</button>
       </div>`)}
       <label class="thumb add" id="photo-add">
-        <input id="photo-input" type="file" accept="image/*" ${maxPhotos > 1 ? 'multiple' : ''} hidden>
+        <input id="photo-input" type="file" accept="image/*" multiple hidden>
         <span aria-hidden="true">+</span><small>Добавить</small>
       </label>
     </div>
@@ -163,19 +162,20 @@ function formHero(template, paletteId) {
 }
 
 /**
- * @param {{ card: object, template: object, songs: object[], maxPhotos: number, today?: number }} input
+ * @param {{ card: object, template: object, songs: object[], today?: number }} input
  */
-export function renderForm({ card, template, songs, maxPhotos, today = Date.now() }) {
-  const occasions = occasionsForTier(card.tier);
+export function renderForm({ card, template, songs, today = Date.now() }) {
+  const occasions = OCCASION_TEXTS;
   const occasion = startOccasion(occasions, template, today);
   const paletteId = startPalette(card, template);
   return documentPage({
     title: `Открытка «${template.name}»`,
-    head: html`${brandFonts}<link rel="stylesheet" href="${asset('css/app.css')}"><script src="${asset('js/form.js')}" defer></script>`,
+    head: html`${appHead}<script src="${asset('js/form.js')}" defer></script>`,
+    themeColor: APP_BAR_COLOR,
     bodyClass: 'form-page',
     body: html`<main class="form-wrap">
       <header class="form-head">
-        ${brandLockup()}
+        ${topBar()}
         ${stepsBar(2)}
         <a class="back-link" href="/c/${card.code}?pick=1">← Другой шаблон</a>
         ${formHero(template, paletteId)}
@@ -188,7 +188,7 @@ export function renderForm({ card, template, songs, maxPhotos, today = Date.now(
         <div class="field">
           <label for="message">Текст поздравления</label>
           <p class="field-hint">Мы уже подставили готовый текст. Оставьте его, выберите другой или напишите свой.</p>
-          ${textPicker(card.tier, occasions, occasion)}
+          ${textPicker(occasions, occasion)}
           <textarea id="message" name="message" rows="7" maxlength="${LIMITS.messageLength}" required placeholder="Напишите свои слова или выберите готовый текст выше">${startMessage(card, occasions, occasion)}</textarea>
           <div class="message-foot">
             <button id="message-undo" class="link-btn" type="button" hidden>Вернуть мой текст</button>
@@ -199,7 +199,7 @@ export function renderForm({ card, template, songs, maxPhotos, today = Date.now(
         <label class="field"><span>От кого</span>
           <input name="sender" maxlength="${LIMITS.senderLength}" autocomplete="off" required value="${card.sender ?? ''}" placeholder="Ваше имя">
           <em class="field-error" data-error="sender"></em></label>
-        ${photoField(maxPhotos, card)}
+        ${photoField(card)}
         ${musicField(card)}
         ${songField(songs, card)}
         <p id="form-error" class="form-error" role="alert"></p>

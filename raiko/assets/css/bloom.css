@@ -18,7 +18,9 @@
 .t-bloom .gate { gap: 2px; background: radial-gradient(80% 50% at 50% 46%, var(--bg2), var(--bg) 72%); }
 .bl-mast { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; width: min(86vw, 360px); margin: 0 0 8px; font: 600 10.5px/1 var(--font-label); letter-spacing: .32em; text-transform: uppercase; color: var(--ink); }
 .bl-mast i { flex: 1; height: 1px; background: currentColor; opacity: .4; }
-.t-bloom .gate-title { margin: 4px 0 0; font-family: var(--font-head); font-size: clamp(42px, 12.5vw, 66px); line-height: 1.05; color: var(--ink); }
+.bl-dedication { position: relative; z-index: 2; margin: 10px 0 0; font: 600 11px/1.4 var(--font-label); letter-spacing: .3em; text-transform: uppercase; color: var(--accent); }
+.t-bloom .gate-title { margin: 2px 0 0; font-family: var(--font-head); font-size: clamp(40px, 12vw, 62px); line-height: 1.05; color: var(--ink); }
+.bl-cover-line { position: relative; z-index: 2; max-width: 300px; margin: 6px 0 4px; font: italic 400 clamp(16px, 4.4vw, 19px)/1.45 var(--font-body); }
 .bud { position: relative; z-index: 3; width: min(62vw, 250px); margin-top: -4px; -webkit-tap-highlight-color: transparent; }
 .bl-flower { display: block; width: 100%; overflow: visible; }
 .bl-flower .stem { fill: none; stroke: var(--accent2); stroke-width: 4; stroke-linecap: round; }
@@ -45,12 +47,12 @@
 @keyframes bl-open { to { transform: rotate(22deg) scale(1.08); } }
 .card.opening .bud { animation: bl-away 1s ease 1.6s forwards; }
 @keyframes bl-away { to { transform: scale(1.7) translateY(-12%); opacity: 0; } }
-.card.opening :is(.t-bloom .gate .bl-mast, .t-bloom .gate-title, .t-bloom .gate-hint) { opacity: 0; transition: opacity .5s ease; }
+.card.opening :is(.t-bloom .gate .bl-mast, .bl-dedication, .t-bloom .gate-title, .bl-cover-line, .t-bloom .gate-hint) { opacity: 0; transition: opacity .5s ease; }
 
-/* ---------- Приветствие: обложка журнала ---------- */
-.bl-mast-small { width: 100%; margin-bottom: 30px; }
-.t-bloom .eyebrow { margin-bottom: 14px; font: 600 11px/1.3 var(--font-label); letter-spacing: .3em; text-transform: uppercase; color: var(--accent); opacity: 1; }
-.t-bloom .recipient { font-family: var(--font-head); font-weight: 400; font-size: clamp(58px, 18vw, 100px); line-height: 1.02; color: var(--ink); }
+/* ---------- Страницы журнала ---------- */
+.bl-page { justify-content: flex-start; padding-top: 74px; }
+.bl-page-head { position: absolute; top: 22px; left: 24px; right: 24px; display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); font: 600 10px/1 var(--font-label); letter-spacing: .26em; text-transform: uppercase; opacity: .75; }
+.bl-kicker { margin: 0 0 14px; font: 600 11px/1.4 var(--font-label); letter-spacing: .3em; text-transform: uppercase; color: var(--accent); }
 .bl-sprig { display: block; width: 210px; margin: 26px auto 0; overflow: visible; }
 .bl-sprig .sprig-line { fill: none; stroke: var(--accent2); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 260; stroke-dashoffset: 260; }
 .scene.in .bl-sprig .sprig-line { animation: bl-draw 1.6s ease .4s forwards; }
@@ -59,30 +61,49 @@
 .scene.in .bl-sprig .sprig-leaf { animation: bl-fade .6s ease 1.3s forwards; }
 @keyframes bl-fade { to { opacity: .9; } }
 
-/* ---------- Текст: колонка с большой кавычкой ---------- */
-.t-bloom .scene-message .panel { align-items: flex-start; padding: 10px 4px; text-align: left; }
-.bl-quote { height: 58px; margin-bottom: 2px; font: 130px/.82 var(--font-head); color: var(--accent); }
-.t-bloom .message { font-family: var(--font-body); font-size: clamp(21px, 5.6vw, 26px); line-height: 1.55; text-align: left; }
-.t-bloom .message.long { font-size: clamp(18px, 4.8vw, 21px); }
-.t-bloom .signature { align-self: flex-end; text-align: right; }
+/* «Этот выпуск — о тебе» */
+.bl-headline { justify-content: center; }
+.bl-headline-title { max-width: 360px; margin: 0; font: 400 clamp(44px, 13vw, 72px)/1.05 var(--font-head); }
+
+/* Статья «Немного о главном» */
+.bl-article { align-items: flex-start; text-align: left; }
+.bl-article-title { margin: 0; font: 400 clamp(46px, 14vw, 76px)/1 var(--font-head); color: var(--ink); overflow-wrap: anywhere; }
+.bl-quote { height: 58px; margin: 6px 0 0; font: 130px/.82 var(--font-head); color: var(--accent); }
+.t-bloom .message { font-family: var(--font-body); font-size: clamp(20px, 5.4vw, 24px); line-height: 1.6; text-align: left; }
+.t-bloom .message.long { font-size: clamp(17px, 4.6vw, 20px); }
+.bl-article .signature { align-self: flex-end; text-align: right; }
 .t-bloom .signature span { font: 600 11px/1.4 var(--font-label); letter-spacing: .26em; text-transform: uppercase; }
-.t-bloom .signature b { font-family: var(--font-head); font-size: 34px; color: var(--accent); }
+.t-bloom .signature b { font-family: var(--font-head); font-weight: 400; font-size: 34px; color: var(--accent); }
+.bl-article .hello-song { align-self: center; margin-top: 30px; }
 
-/* ---------- Фото: арки с цветной подложкой ---------- */
-.bl-mini { width: 46px; margin-bottom: 12px; }
-.bl-mini .sf path, .bl-bouquet .sf.c1 path { fill: var(--accent); }
-.bl-mini .sf-core, .bl-bouquet .sf-core { fill: #e9b949; }
-.t-bloom .section-title { font-family: var(--font-head); font-size: clamp(30px, 8.6vw, 40px); }
-.t-bloom .photos figure { position: relative; padding: 0 12px 12px 0; }
-.t-bloom .photos figure::before { content: ''; position: absolute; inset: 12px 0 0 12px; border-radius: 180px 180px 6px 6px; background: var(--bg2); }
-.t-bloom .photos img { position: relative; aspect-ratio: 4 / 5.4; border-radius: 180px 180px 6px 6px; }
+/* «Моменты»: развороты листаются в сторону, на каждом своя композиция */
+.bl-spreads { display: flex; width: calc(100% + 56px); padding: 4px 28px 8px; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.bl-spreads::-webkit-scrollbar { display: none; }
+.bl-spread { position: relative; flex: 0 0 100%; display: grid; gap: 14px; padding: 18px 16px 34px; background: color-mix(in srgb, var(--bg) 60%, #fff); box-shadow: 0 24px 40px -24px rgba(0, 0, 0, .35); scroll-snap-align: center; }
+.bl-spread-2 { grid-template-columns: 1fr 1fr; align-items: end; }
+.bl-spread-2 .bl-shot:nth-child(2) { margin-top: 40px; }
+.bl-shot { margin: 0; }
+.bl-shot .photo-btn { width: 100%; aspect-ratio: 4 / 5; }
+.bl-spread-1 .photo-btn { aspect-ratio: 4 / 5.2; border-radius: 180px 180px 4px 4px; overflow: hidden; }
+.bl-spread-2 .photo-btn { aspect-ratio: 3 / 4.4; }
+.bl-shot figcaption { margin-top: 10px; font: 600 10px/1.4 var(--font-label); letter-spacing: .26em; text-transform: uppercase; color: var(--accent); text-align: left; }
+.bl-spread-no { position: absolute; right: 16px; bottom: 12px; font: italic 400 14px/1 var(--font-body); opacity: .6; }
+.bl-moments .hello-song { margin-top: 26px; }
 
-/* ---------- Финал: букет ---------- */
-.bl-bouquet { width: 170px; margin-bottom: 8px; }
-.bl-bouquet .b-stem { fill: none; stroke: var(--accent2); stroke-width: 3; stroke-linecap: round; }
-.bl-bouquet .sf.c2 path { fill: var(--accent3); }
-.bl-bouquet .sf.c3 path { fill: color-mix(in srgb, var(--accent) 60%, var(--bg)); }
-.bl-bouquet .b-wrap { fill: color-mix(in srgb, var(--ink) 14%, var(--bg)); }
-.t-bloom .final-thanks { font-family: var(--font-head); font-weight: 400; }
-.t-bloom .thanks { border-radius: 0; background: var(--ink); color: var(--bg); font: 600 13px var(--font-label); letter-spacing: .2em; text-transform: uppercase; }
+/* Последняя страница: сад расцветает, пожелание, подпись */
+.bl-last { justify-content: center; }
+.bl-garden { width: min(90vw, 360px); margin-bottom: 18px; overflow: visible; }
+.bl-garden .g-stem { fill: none; stroke: var(--accent2); stroke-width: 2.4; stroke-linecap: round; }
+.bl-garden .sf path { fill: var(--accent); }
+.bl-garden .sf.c2 path { fill: var(--accent3); }
+.bl-garden .sf.c3 path { fill: color-mix(in srgb, var(--accent) 55%, var(--bg)); }
+.bl-garden .sf-core { fill: #e9b949; }
+.bl-grow { transform-box: fill-box; transform-origin: 50% 100%; transform: scale(0); }
+.scene.in .bl-grow { animation: bl-grow 1.1s cubic-bezier(.3, 1.3, .5, 1) calc(.4s + var(--i) * .22s) forwards; }
+@keyframes bl-grow { to { transform: none; } }
+.t-bloom .final-thanks { max-width: 360px; font-family: var(--font-head); font-weight: 400; font-size: clamp(28px, 8vw, 38px); }
+.bl-last-sub { max-width: 330px; margin: -12px 0 18px; font: italic 400 19px/1.45 var(--font-body); }
+.bl-last .signature { margin: 0 0 26px; }
+.t-bloom .story-action { border-radius: 0; background: var(--ink); color: var(--bg); font: 600 13px var(--font-label); letter-spacing: .2em; text-transform: uppercase; }
+.t-bloom .thanks { border: 1px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); font: 600 12px var(--font-label); letter-spacing: .18em; text-transform: uppercase; }
 .t-bloom .next-btn { font: 600 12px var(--font-label); letter-spacing: .24em; text-transform: uppercase; }

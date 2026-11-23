@@ -3,7 +3,6 @@
  *
  * Поля:
  *   id      латиницей, совпадает с именем файла стилей assets/css/<id>.css
- *   tier    'basic' (обычный) или 'premium' (премиум)
  *   retired true, если шаблон убран из каталога: уже заполненные открытки на нём продолжают открываться
  *   tag     повод на карточке в каталоге: «Новый год», «День рождения»…
  *   occasion id повода из texts.js, который сразу выбран в форме
@@ -24,7 +23,6 @@
 export const DESIGNS = [
   {
     id: 'newyear',
-    tier: 'basic',
     tag: 'Новый год',
     occasion: 'new-year',
     name: 'Снежный шар',
@@ -42,7 +40,6 @@ export const DESIGNS = [
   },
   {
     id: 'birthday',
-    tier: 'basic',
     tag: 'День рождения',
     occasion: 'birthday',
     name: 'Сюрприз',
@@ -60,7 +57,6 @@ export const DESIGNS = [
   },
   {
     id: 'love',
-    tier: 'basic',
     tag: 'Для двоих',
     occasion: 'love',
     name: 'Замок сердца',
@@ -78,7 +74,6 @@ export const DESIGNS = [
   },
   {
     id: 'bloom',
-    tier: 'premium',
     tag: 'Без повода',
     name: 'Цветение',
     blurb: 'Бутон раскрывается в цветок, а открытка листается как журнал',
@@ -95,7 +90,6 @@ export const DESIGNS = [
   },
   {
     id: 'aurora',
-    tier: 'premium',
     tag: 'Без повода',
     name: 'Сияние',
     blurb: 'Северное сияние и жемчужина света, которая раскрывается от касания',
@@ -112,7 +106,6 @@ export const DESIGNS = [
   },
   {
     id: 'envelope',
-    tier: 'basic',
     retired: true,
     name: 'Конверт',
     blurb: 'Письмо с сургучной печатью',
@@ -125,7 +118,6 @@ export const DESIGNS = [
   },
   {
     id: 'tulips',
-    tier: 'basic',
     retired: true,
     name: 'Тюльпаны',
     blurb: 'Цветы вырастают от касания',
@@ -138,7 +130,6 @@ export const DESIGNS = [
   },
   {
     id: 'night',
-    tier: 'basic',
     retired: true,
     name: 'Звёздная ночь',
     blurb: 'Падающая звезда и желание',
@@ -151,7 +142,6 @@ export const DESIGNS = [
   },
   {
     id: 'polaroid',
-    tier: 'basic',
     retired: true,
     name: 'Полароид',
     blurb: 'Снимок проявляется на глазах',
@@ -164,7 +154,6 @@ export const DESIGNS = [
   },
   {
     id: 'watercolor',
-    tier: 'basic',
     retired: true,
     name: 'Акварель',
     blurb: 'Краски расцветают по бумаге',
@@ -177,7 +166,6 @@ export const DESIGNS = [
   },
   {
     id: 'gold',
-    tier: 'premium',
     retired: true,
     name: 'Чёрное золото',
     blurb: 'Двери в стиле ар-деко и золотая пыль',
@@ -190,7 +178,6 @@ export const DESIGNS = [
   },
   {
     id: 'garden',
-    tier: 'premium',
     retired: true,
     name: 'Ботанический сад',
     blurb: 'Листья расступаются, открывая сад',
@@ -203,7 +190,6 @@ export const DESIGNS = [
   },
   {
     id: 'cinema',
-    tier: 'premium',
     retired: true,
     name: 'Премьера',
     blurb: 'Обратный отсчёт и фильм о вас',
@@ -216,7 +202,6 @@ export const DESIGNS = [
   },
   {
     id: 'silk',
-    tier: 'premium',
     retired: true,
     name: 'Шёлк и розы',
     blurb: 'Занавес открывается под дождь лепестков',
@@ -229,7 +214,6 @@ export const DESIGNS = [
   },
   {
     id: 'ornament',
-    tier: 'premium',
     retired: true,
     name: 'Шаңырақ',
     blurb: 'Казахский орнамент и шаңырақ',

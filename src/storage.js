@@ -1,8 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-
-const songName = (extension) => `${randomBytes(12).toString('hex')}.${extension}`;
 
 function removeQuietly(path) {
   try {
@@ -22,6 +20,7 @@ export function createStorage(root) {
 
   return {
     photoPath: (code, name) => join(photoDir(code), name),
+    /** Мелодии, загруженные до того, как раздел «Музыка» убрали: их ещё играют старые открытки. */
     songPath: (name) => join(songsRoot, name),
 
     savePhoto(code, buffer) {
@@ -50,22 +49,6 @@ export function createStorage(root) {
 
     listPhotoCodes() {
       return readdirSync(photosRoot);
-    },
-
-    saveSong(buffer, extension) {
-      const name = songName(extension);
-      writeFileSync(join(songsRoot, name), buffer);
-      return name;
-    },
-
-    newSongName: songName,
-
-    songSize(name) {
-      return statSync(join(songsRoot, name), { throwIfNoEntry: false })?.size ?? 0;
-    },
-
-    removeSong(name) {
-      rmSync(join(songsRoot, name), { force: true });
     },
   };
 }

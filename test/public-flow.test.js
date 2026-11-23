@@ -2,30 +2,26 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { sweep } from '../src/sweep.js';
-import { occasionProblems, occasionsForTier, suggestedOccasion } from '../src/texts.js';
-import { designProblems, getTemplate } from '../src/tiers.js';
+import { OCCASIONS } from '../raiko/texts.js';
+import { OCCASION_TEXTS, occasionProblems, suggestedOccasion } from '../src/texts.js';
+import { CATALOG, designProblems, getTemplate } from '../src/tiers.js';
 import { greetingForm, issueCard, JPEG, makeContext, postForm } from './helpers.js';
 
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 
 const catalogTiles = (body) => (body.match(/class="cat-card"/g) ?? []).length;
 
-test('unused basic code opens a catalog of basic templates', async (t) => {
+test('every unused code opens the catalog with all templates', async (t) => {
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
   const res = await app.request(`/c/${code}`);
   assert.equal(res.status, 200);
   const body = await res.text();
-  assert.equal(catalogTiles(body), 3);
+  assert.equal(catalogTiles(body), CATALOG.length);
   assert.ok(!body.includes('id="greeting-form"'));
-  assert.ok(!body.includes('template=bloom'));
-});
-
-test('premium code opens all ten templates', async (t) => {
-  const { app, repo } = makeContext(t);
-  const body = await (await app.request(`/c/${issueCard(repo, 'bloom', 'premcde23456')}`)).text();
-  assert.equal(catalogTiles(body), 5);
-  assert.match(body, /template=newyear/);
+  assert.match(body, /template=bloom/);
+  assert.match(body, /до 5 фото/);
+  assert.doesNotMatch(body, /Премиум|Базовый/);
 });
 
 test('choosing a template opens the form for it, the code stays the same', async (t) => {
@@ -41,28 +37,29 @@ test('choosing a template opens the form for it, the code stays the same', async
   assert.match(await (await app.request(`/c/${code}`)).text(), /t-birthday/);
 });
 
-test('basic code cannot use a premium template', async (t) => {
+test('a new code cannot pick a retired or unknown template', async (t) => {
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
-  assert.equal(catalogTiles(await (await app.request(`/c/${code}?template=bloom`)).text()), 3);
-  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'bloom' }))).status, 400);
+  assert.equal(catalogTiles(await (await app.request(`/c/${code}?template=gold`)).text()), CATALOG.length);
+  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'gold' }))).status, 400);
   assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'nope' }))).status, 400);
   assert.equal(repo.getCard(code).status, 'new');
 });
 
-test('premium code gives five photos on any template', async (t) => {
+test('every code takes up to five photos on any template', async (t) => {
   const { app, repo } = makeContext(t);
-  const code = issueCard(repo, 'bloom', 'premcde23456');
-  const form = greetingForm({ templateId: 'newyear' }, Array(5).fill(JPEG));
-  assert.equal((await postForm(app, `/c/${code}`, form)).status, 200);
+  const code = issueCard(repo);
+  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'bloom' }, Array(6).fill(JPEG)))).status, 400);
+  assert.equal((await postForm(app, `/c/${code}`, greetingForm({ templateId: 'bloom' }, Array(5).fill(JPEG)))).status, 200);
   assert.equal(repo.getCard(code).photos.length, 5);
+  assert.match(await (await app.request(`/c/${code}?edit=1`)).text(), /data-max="5"/);
 });
 
 test('template can be changed in a draft but not after activation', async (t) => {
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
   await postForm(app, `/c/${code}`, greetingForm());
-  assert.equal(catalogTiles(await (await app.request(`/c/${code}?pick=1`)).text()), 3);
+  assert.equal(catalogTiles(await (await app.request(`/c/${code}?pick=1`)).text()), CATALOG.length);
   await postForm(app, `/c/${code}`, greetingForm({ templateId: 'love' }));
   assert.equal(repo.getCard(code).templateId, 'love');
   await app.request(`/c/${code}/activate`, { method: 'POST' });
@@ -78,7 +75,7 @@ test('an abandoned draft returns to the catalog', async (t) => {
   clock.now += 8 * 24 * 60 * 60 * 1000;
   sweep({ repo, storage, now: clock.now });
   assert.equal(repo.getCard(code).templateId, null);
-  assert.equal(catalogTiles(await (await app.request(`/c/${code}`)).text()), 3);
+  assert.equal(catalogTiles(await (await app.request(`/c/${code}`)).text()), CATALOG.length);
 });
 
 test('unknown code returns 404', async (t) => {
@@ -138,18 +135,6 @@ test('activation needs a draft, then locks the card for one week', async (t) => 
   assert.ok(!body.includes('id="greeting-form"'));
 });
 
-test('basic template accepts three photos, premium accepts five', async (t) => {
-  const { app, repo } = makeContext(t);
-  const basic = issueCard(repo, 'newyear', 'bascccde2345');
-  const premium = issueCard(repo, 'bloom', 'premcde23456');
-  assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, Array(4).fill(JPEG)))).status, 400);
-  assert.equal((await postForm(app, `/c/${basic}`, greetingForm({}, Array(3).fill(JPEG)))).status, 200);
-  assert.equal(repo.getCard(basic).photos.length, 3);
-  assert.equal((await postForm(app, `/c/${premium}`, greetingForm({}, Array(6).fill(JPEG)))).status, 400);
-  assert.equal((await postForm(app, `/c/${premium}`, greetingForm({}, Array(5).fill(JPEG)))).status, 200);
-  assert.equal(repo.getCard(premium).photos.length, 5);
-});
-
 test('rejects a non-JPEG upload', async (t) => {
   const { app, repo } = makeContext(t);
   const code = issueCard(repo);
@@ -191,8 +176,8 @@ test('after a week the card and its photos are gone', async (t) => {
 
 test('sweep expires due cards and frees abandoned drafts', async (t) => {
   const { app, repo, storage, clock } = makeContext(t);
-  const active = issueCard(repo, 'newyear', 'actvecde2345');
-  const draft = issueCard(repo, 'newyear', 'draftcde2345');
+  const active = issueCard(repo, 'actvecde2345');
+  const draft = issueCard(repo, 'draftcde2345');
   await postForm(app, `/c/${active}`, greetingForm());
   await app.request(`/c/${active}/activate`, { method: 'POST' });
   await postForm(app, `/c/${draft}`, greetingForm({}, [JPEG]));
@@ -299,9 +284,8 @@ test('template styles and demo photos are served from the designer folder', asyn
 test('a broken template description is reported in plain words', () => {
   const good = { ...getTemplate('bloom'), id: 'gold-copy' };
   assert.deepEqual(designProblems(getTemplate('bloom')), []);
-  const problems = designProblems({ ...good, id: 'new-one', tier: 'vip', fx: 'rain', palettes: [{ ...good.palettes[0], accent: 'red' }] });
+  const problems = designProblems({ ...good, id: 'new-one', fx: 'rain', palettes: [{ ...good.palettes[0], accent: 'red' }] });
   assert.ok(problems.some((p) => p.includes('raiko/assets/css/new-one.css')));
-  assert.ok(problems.some((p) => p.includes('tier')));
   assert.ok(problems.some((p) => p.includes('fx')));
   assert.ok(problems.some((p) => p.includes('#rrggbb')));
   assert.ok(designProblems(getTemplate('bloom'), new Set(['bloom'])).some((p) => p.includes('уже есть')));
@@ -345,34 +329,29 @@ test('demo pages exist for all ten templates and pages are not indexed', async (
   }
 });
 
-test('form offers ready texts per occasion in two languages, premium gets its own set', async (t) => {
+test('form offers short and long ready texts per occasion in two languages to every code', async (t) => {
   const { app, repo } = makeContext(t);
-  const basicForm = await (await app.request(`/c/${issueCard(repo, 'newyear', 'bascccde2345')}?template=newyear`)).text();
-  const premiumForm = await (await app.request(`/c/${issueCard(repo, 'bloom', 'premcde23456')}?template=bloom`)).text();
-  const [basicBirthday] = occasionsForTier('basic')[0].texts.ru;
-  const [premiumBirthday] = occasionsForTier('premium')[0].texts.ru;
+  const form = await (await app.request(`/c/${issueCard(repo)}?template=bloom`)).text();
+  const [birthday] = OCCASIONS;
   const escape = (text) => text.replaceAll('"', '&quot;').replaceAll("'", '&#39;');
-  assert.ok(basicForm.includes(escape(basicBirthday)));
-  assert.ok(!basicForm.includes(escape(premiumBirthday)));
-  assert.ok(premiumForm.includes(escape(premiumBirthday)));
-  assert.ok(premiumForm.includes('Премиум-тексты'));
-  for (const occasion of occasionsForTier('basic')) {
-    assert.match(basicForm, new RegExp(`class="tp-variants" data-occ="${occasion.id}" data-lang="ru"`));
-    assert.match(basicForm, new RegExp(`class="tp-variants" data-occ="${occasion.id}" data-lang="kk"`));
+  assert.ok(form.includes(escape(birthday.short.ru[0])));
+  assert.ok(form.includes(escape(birthday.long.ru[0])));
+  assert.ok(!form.includes('Премиум-тексты'));
+  for (const occasion of OCCASION_TEXTS) {
+    assert.match(form, new RegExp(`class="tp-variants" data-occ="${occasion.id}" data-lang="ru"`));
+    assert.match(form, new RegExp(`class="tp-variants" data-occ="${occasion.id}" data-lang="kk"`));
   }
-  assert.match(basicForm, /<textarea id="message"/);
-  assert.match(basicForm, /id="message-undo"/);
+  assert.match(form, /<textarea id="message"/);
+  assert.match(form, /id="message-undo"/);
 });
 
-test('every occasion has three variants per language and fits the message limit', () => {
-  for (const tier of ['basic', 'premium']) {
-    for (const occasion of occasionsForTier(tier)) {
-      assert.equal(occasion.texts.ru.length, 3, `${tier} ${occasion.id} ru`);
-      assert.equal(occasion.texts.kk.length, 3, `${tier} ${occasion.id} kk`);
-    }
+test('every occasion has three short and three long variants per language and fits the message limit', () => {
+  for (const occasion of OCCASION_TEXTS) {
+    assert.equal(occasion.texts.ru.length, 6, `${occasion.id} ru`);
+    assert.equal(occasion.texts.kk.length, 6, `${occasion.id} kk`);
   }
-  assert.deepEqual(occasionProblems({ ...occasionsForTier('basic')[0], basic: { ru: ['a'], kk: ['b'] }, premium: { ru: ['c'], kk: ['d'] } }), []);
-  const problems = occasionProblems({ id: 'Bad id', name: { ru: 'x' }, season: ['13-01'], basic: { ru: ['x'.repeat(1001)], kk: [] } });
+  assert.deepEqual(occasionProblems({ ...OCCASIONS[0], short: { ru: ['a'], kk: ['b'] }, long: { ru: ['c'], kk: ['d'] } }), []);
+  const problems = occasionProblems({ id: 'Bad id', name: { ru: 'x' }, season: ['13-01'], short: { ru: ['x'.repeat(1001)], kk: [] } });
   assert.ok(problems.some((p) => p.includes('латиница')));
   assert.ok(problems.some((p) => p.includes('name')));
   assert.ok(problems.some((p) => p.includes('season')));
@@ -388,9 +367,10 @@ test('the nearest holiday is preselected in the form', () => {
   assert.equal(suggestedOccasion(Date.UTC(2026, 10, 9)), 'birthday');
 });
 
-test('landing page shows photo limits for both tiers', async (t) => {
+test('landing page lists every template with one photo limit', async (t) => {
   const { app } = makeContext(t);
   const body = await (await app.request('/')).text();
-  assert.match(body, /Базовые шаблоны, до 3 фото/);
-  assert.match(body, /Премиум, до 5 фото/);
+  assert.match(body, /Шаблоны, до 5 фото/);
+  assert.equal((body.match(/class="tpl-link"/g) ?? []).length, CATALOG.length);
+  assert.doesNotMatch(body, /Премиум|Базовые/);
 });

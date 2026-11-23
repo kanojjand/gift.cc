@@ -5,7 +5,6 @@ import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { createRepo, openDb } from '../src/db.js';
 import { createStorage } from '../src/storage.js';
-import { getTemplate } from '../src/tiers.js';
 
 export const ORIGIN = 'http://localhost:3000';
 export const PASSWORD = 'test-password';
@@ -27,12 +26,12 @@ export function makeContext(t, overrides = {}) {
   const repo = createRepo(db);
   const storage = createStorage(dir);
   const clock = { now: Date.UTC(2026, 10, 9) };
-  const app = createApp({ config, repo, storage, now: () => clock.now, compressSong: async () => false, ...overrides });
+  const app = createApp({ config, repo, storage, now: () => clock.now, ...overrides });
   return { app, repo, storage, clock, config };
 }
 
-export function issueCard(repo, templateId = 'newyear', code = 'abcdefghjkmn') {
-  repo.createBatch({ tier: getTemplate(templateId).tier, label: 'test', codes: [code], now: 1 });
+export function issueCard(repo, code = 'abcdefghjkmn') {
+  repo.createBatch({ label: 'test', codes: [code], now: 1 });
   return code;
 }
 

@@ -1,7 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createApp } from './app.js';
-import { compressSong } from './audio.js';
 import { createRepo, openDb } from './db.js';
 import { createStorage } from './storage.js';
 import { sweep } from './sweep.js';
@@ -24,6 +23,6 @@ export function bootApp(config) {
   const repo = createRepo(openDb(join(config.dataDir, 'flowers.db')));
   const storage = createStorage(config.dataDir);
   runSweep({ repo, storage });
-  const app = createApp({ config, repo, storage, now: Date.now, compressSong });
+  const app = createApp({ config, repo, storage, now: Date.now });
   return { app, repo, storage };
 }

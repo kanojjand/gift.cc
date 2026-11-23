@@ -1,11 +1,26 @@
 import { OCCASIONS } from '../raiko/texts.js';
 import { LIMITS } from './config.js';
-import { TIERS } from './tiers.js';
 
 export const TEXT_LANGS = Object.freeze(['ru', 'kk']);
+/** Наборы готовых текстов в raiko/texts.js: в форме сначала короткие, потом развёрнутые. */
+const TEXT_SETS = Object.freeze(['short', 'long']);
 const ID_PATTERN = /^[a-z0-9-]+$/;
 const DAY_PATTERN = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const DAY_FORMAT = new Intl.DateTimeFormat('en-CA', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Almaty' });
+
+function textProblems(occasion, where) {
+  return TEXT_SETS.flatMap((set) =>
+    TEXT_LANGS.flatMap((lang) => {
+      const list = occasion?.[set]?.[lang];
+      if (!Array.isArray(list) || list.length === 0) return [`${where}: нет текстов ${set}.${lang}`];
+      return list.flatMap((text, index) => {
+        if (typeof text !== 'string' || !text.trim()) return [`${where}: ${set}.${lang} вариант ${index + 1} пустой`];
+        if ([...text].length > LIMITS.messageLength) return [`${where}: ${set}.${lang} вариант ${index + 1} длиннее ${LIMITS.messageLength} символов`];
+        return [];
+      });
+    }),
+  );
+}
 
 /** Ошибки в одном поводе из raiko/texts.js; пустой массив, если всё верно. */
 export function occasionProblems(occasion, seenIds = new Set()) {
@@ -20,22 +35,7 @@ export function occasionProblems(occasion, seenIds = new Set()) {
     const valid = Array.isArray(occasion.season) && occasion.season.length === 2 && occasion.season.every((day) => DAY_PATTERN.test(day));
     if (!valid) problems.push(`${where}: season в виде ['ММ-ДД', 'ММ-ДД']`);
   }
-  for (const tier of Object.keys(TIERS)) {
-    for (const lang of TEXT_LANGS) {
-      const list = occasion?.[tier]?.[lang];
-      if (!Array.isArray(list) || list.length === 0) {
-        problems.push(`${where}: нет текстов ${tier}.${lang}`);
-        continue;
-      }
-      list.forEach((text, index) => {
-        if (typeof text !== 'string' || !text.trim()) problems.push(`${where}: ${tier}.${lang} вариант ${index + 1} пустой`);
-        else if ([...text].length > LIMITS.messageLength) {
-          problems.push(`${where}: ${tier}.${lang} вариант ${index + 1} длиннее ${LIMITS.messageLength} символов`);
-        }
-      });
-    }
-  }
-  return problems;
+  return [...problems, ...textProblems(occasion, where)];
 }
 
 function buildOccasions(occasions) {
@@ -51,11 +51,11 @@ function buildOccasions(occasions) {
 
 const ALL = buildOccasions(OCCASIONS);
 
-/** Поводы с текстами нужного тарифа: [{ id, name, texts: { ru: [...], kk: [...] } }]. */
-export function occasionsForTier(tierId) {
-  const tier = TIERS[tierId] ? tierId : 'basic';
-  return ALL.map(({ id, name, [tier]: texts }) => ({ id, name, texts }));
-}
+const textsOf = (occasion) =>
+  Object.freeze(Object.fromEntries(TEXT_LANGS.map((lang) => [lang, Object.freeze(TEXT_SETS.flatMap((set) => occasion[set][lang]))])));
+
+/** Поводы с готовыми текстами для формы: [{ id, name, texts: { ru: [...], kk: [...] } }], короткие тексты первыми. */
+export const OCCASION_TEXTS = Object.freeze(ALL.map((occasion) => Object.freeze({ id: occasion.id, name: occasion.name, texts: textsOf(occasion) })));
 
 function inSeason([from, to], day) {
   return from <= to ? day >= from && day <= to : day >= from || day <= to;
