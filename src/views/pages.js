@@ -122,17 +122,17 @@ export function landingPage() {
       <h1>Поздравление, которое живёт внутри букета</h1>
       <p class="lead">QR-код на открытке открывает страницу с именем, словами, фото и музыкой. Слова не потеряются, а эмоция останется.</p>
       <div class="hero-actions">
-        <a class="ui-btn" href="/demo/${CATALOG[0]?.id ?? ''}">Посмотреть демо</a>
-        <a class="ghost-btn" href="#shops">Магазинам</a>
+        <a class="ui-btn" href="#templates">Выбрать шаблон</a>
+        <a class="ghost-btn" href="/demo/${CATALOG[0]?.id ?? ''}">Посмотреть демо</a>
       </div>
+
+      <h2 id="templates">Шаблоны, до ${MAX_PHOTOS} фото</h2>
+      <div class="tpl-list">${CATALOG.map(templateLink)}</div>
 
       <h2>Как это работает</h2>
       <ol class="step-list">
         ${LANDING_STEPS.map((step, index) => html`<li><span class="step-num">0${index + 1}</span><b>${step.title}</b><small>${step.text}</small></li>`)}
       </ol>
-
-      <h2>Шаблоны, до ${MAX_PHOTOS} фото</h2>
-      <div class="tpl-list">${CATALOG.map(templateLink)}</div>
 
       <section class="shop-card" id="shops">
         <h2>Цветочным магазинам</h2>
