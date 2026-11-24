@@ -1,9 +1,9 @@
-# Выкладка gift.cclab.kz на домашний сервер (запускать из домашней сети, PowerShell, из папки flowers):
+﻿# Выкладка gift.cclab.kz на домашний сервер (из любой сети при включённом Tailscale, PowerShell, из папки flowers):
 #   powershell -ExecutionPolicy Bypass -File .\deploy-to-server.ps1
 # Делает бэкап текущей версии на сервере, заливает src/public/raiko и пересобирает контейнер flowers.
 $ErrorActionPreference = 'Stop'
 $key = "$env:USERPROFILE\.ssh\rclab_server"
-$server = 'kanojjand@192.168.1.231'
+$server = 'kanojjand@100.92.251.70'
 $stamp = Get-Date -Format 'yyyy-MM-dd-HHmm'
 $archive = Join-Path $env:TEMP "flowers-$stamp.tgz"
 
