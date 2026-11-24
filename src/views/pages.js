@@ -97,19 +97,54 @@ const templateLink = (template) => html`
     <span><b>${template.name}</b><small>${template.blurb}</small></span>
   </a>`;
 
+const LANDING_STEPS = [
+  { title: 'Открытка с QR в букете', text: 'Цветочный магазин кладёт к цветам открытку с QR-кодом, как обычную.' },
+  { title: 'Покупатель пишет поздравление', text: 'Сканирует код, выбирает шаблон, пишет слова, добавляет до 5 фото и песню. Без приложений и регистрации.' },
+  { title: 'Получатель открывает чудо', text: 'Наводит камеру на открытку и видит живую страницу: имя, анимацию, фото и музыку.' },
+];
+
+/** Первая страница: что это, как работает, шаблоны и предложение магазинам. */
 export function landingPage() {
+  const shopText = 'Здравствуйте! Интересуют QR-открытки CC Lab для нашего цветочного магазина.';
   return documentPage({
     title: `${BRAND.name}: QR-поздравления`,
     head: appHead,
     themeColor: APP_BAR_COLOR,
     body: html`<main class="landing">
-      ${brandLockup()}
+      <div class="top-bar">
+        ${brandLockup()}
+        <div class="top-links">
+          <a class="site-link" href="${BRAND.site.url}" rel="noopener">${BRAND.site.label} <span aria-hidden="true">↗</span></a>
+          ${themeToggle()}
+        </div>
+      </div>
       <p class="eyebrow">${BRAND.tagline}</p>
       <h1>Поздравление, которое живёт внутри букета</h1>
-      <p class="lead">QR-код на открытке открывает страницу с именем, словами, фото и музыкой.</p>
+      <p class="lead">QR-код на открытке открывает страницу с именем, словами, фото и музыкой. Слова не потеряются, а эмоция останется.</p>
+      <div class="hero-actions">
+        <a class="ui-btn" href="/demo/${CATALOG[0]?.id ?? ''}">Посмотреть демо</a>
+        <a class="ghost-btn" href="#shops">Магазинам</a>
+      </div>
+
+      <h2>Как это работает</h2>
+      <ol class="step-list">
+        ${LANDING_STEPS.map((step, index) => html`<li><span class="step-num">0${index + 1}</span><b>${step.title}</b><small>${step.text}</small></li>`)}
+      </ol>
+
       <h2>Шаблоны, до ${MAX_PHOTOS} фото</h2>
       <div class="tpl-list">${CATALOG.map(templateLink)}</div>
-      <nav class="contact-row">${contactLinks()}</nav>
+
+      <section class="shop-card" id="shops">
+        <h2>Цветочным магазинам</h2>
+        <p class="shop-title">Букет с живым поздравлением запоминается дольше цветов</p>
+        <p>Печатаем партию открыток с QR-кодами для вашего магазина. Покупателю — новая услуга к букету, вам — повод для повторных покупок. В панели видно, сколько открыток активировали и открыли.</p>
+        <a class="ui-btn" href="${whatsappLink(shopText)}" rel="noopener">Написать в WhatsApp</a>
+      </section>
+
+      <footer class="landing-foot">
+        <a class="made-by" href="${BRAND.site.url}" rel="noopener">${brandMark()}<span>Проект <b>CC Lab</b> — лаборатории цифровых разработок · ${BRAND.site.label}</span></a>
+        <nav class="contact-row">${contactLinks()}</nav>
+      </footer>
     </main>`,
   });
 }

@@ -4,6 +4,7 @@ import { csrf } from 'hono/csrf';
 import { DAY_MS } from '../config.js';
 import { DEFAULT_LIFETIME_DAYS, parseLifetime, termExpiry } from '../lifetime.js';
 import { qrPng, qrSvg } from '../qr.js';
+import { QR_STYLES, qrStyledSvg } from '../qr-styles.js';
 import {
   clientIp,
   createRateLimiter,
@@ -111,8 +112,11 @@ function registerBatches(routes, { repo, now, config }) {
     const batch = batchOf(c);
     if (!batch) return c.notFound();
     const unused = repo.listCards(batch.id).filter((card) => card.status === 'new');
-    const items = unused.map((card) => ({ code: card.code, svg: qrSvg(urlOf(card.code)) }));
-    return c.html(printPage({ batch, items }).value);
+    // ?style=dots|rounded|insta|telegram|rose — красивый QR; без него печатается классический
+    const style = Object.hasOwn(QR_STYLES, c.req.query('style') ?? '') ? c.req.query('style') : 'classic';
+    const draw = (url) => (style === 'classic' ? qrSvg(url) : qrStyledSvg(url, style));
+    const items = unused.map((card) => ({ code: card.code, svg: draw(urlOf(card.code)) }));
+    return c.html(printPage({ batch, items, style }).value);
   });
 
   routes.get('/batches/:id/codes.csv', (c) => {
@@ -192,6 +196,14 @@ function registerCards(routes, { repo, storage, now, config }) {
     if (!card) return c.notFound();
     const png = qrPng(publicUrl(config, card.code), { width: QR_PNG_WIDTH });
     return c.body(png, 200, { 'content-type': 'image/png', 'content-disposition': `attachment; filename="qr-${card.code}.png"` });
+  });
+
+  routes.get('/cards/:code/qr.svg', (c) => {
+    const card = cardOf(c);
+    if (!card) return c.notFound();
+    const style = Object.hasOwn(QR_STYLES, c.req.query('style') ?? '') ? c.req.query('style') : 'classic';
+    const svg = qrStyledSvg(publicUrl(config, card.code), style);
+    return c.body(svg, 200, { 'content-type': 'image/svg+xml', 'content-disposition': `attachment; filename="qr-${card.code}-${style}.svg"` });
   });
 
   routes.post('/cards/:code/term', async (c) => {

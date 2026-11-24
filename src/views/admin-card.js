@@ -1,3 +1,4 @@
+import { QR_STYLES } from '../qr-styles.js';
 import { CARD_TERMS, lifetimeLabel } from '../lifetime.js';
 import { getPalette, getTemplate } from '../tiers.js';
 import { expiryText, formatDate, shell, STATUS_LABELS } from './admin.js';
@@ -110,6 +111,9 @@ export function cardPage({ card, batch, url, songTitle, notice, error }) {
         <div class="batch-actions">
           <button class="ghost" type="button" data-copy="${url}">Ссылка</button>
           <a class="ghost" href="/admin/cards/${card.code}/qr.png">QR</a>
+          <details class="qr-style-menu"><summary class="ghost">QR в стиле…</summary>
+            ${Object.entries(QR_STYLES).map(([id, s]) => html`<a href="/admin/cards/${card.code}/qr.svg?style=${id}">${s.name}</a>`)}
+          </details>
           <a class="primary" href="${url}" target="_blank" rel="noopener">Открыть</a>
         </div>
       </div>

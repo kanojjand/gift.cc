@@ -184,3 +184,11 @@ code { font: 500 13.5px var(--f-mono); }
 body.login { min-height: 100svh; display: grid; place-items: center; padding: 16px; }
 .login-box { display: grid; gap: 16px; width: min(100%, 360px); }
 .login-box h1 { margin: 8px 0 0; }
+
+/* Скачивание QR в выбранном стиле со страницы кода */
+.qr-style-menu { position: relative; }
+.qr-style-menu summary { list-style: none; cursor: pointer; }
+.qr-style-menu summary::-webkit-details-marker { display: none; }
+.qr-style-menu[open] > a { display: block; }
+.qr-style-menu > a { display: none; padding: 6px 2px; white-space: nowrap; }
+.qr-style-menu[open] { padding-bottom: 4px; }

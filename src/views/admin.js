@@ -1,6 +1,7 @@
 import { LIMITS } from '../config.js';
 import { DEFAULT_LIFETIME_DAYS, LIFETIME_CHOICES, lifetimeLabel, lifetimeValue } from '../lifetime.js';
 import { getTemplate, MAX_PHOTOS } from '../tiers.js';
+import { QR_STYLES } from '../qr-styles.js';
 import { asset } from './assets.js';
 import { html, raw } from './html.js';
 import { brandFonts, brandLockup, documentPage } from './pages.js';
@@ -216,7 +217,7 @@ export function batchPage({ batch, cards, urlOf, filter, found, notice, error })
   );
 }
 
-export function printPage({ batch, items }) {
+export function printPage({ batch, items, style = 'classic' }) {
   return documentPage({
     title: `Печать партии №${batch.id}`,
     head: html`<link rel="stylesheet" href="${asset('css/print.css')}"><script src="${asset('js/admin.js')}" defer></script>`,
@@ -224,6 +225,9 @@ export function printPage({ batch, items }) {
     body: html`<div class="screen-note">
         <span>${items.length ? `Партия №${batch.id}: свободных кодов ${items.length}.` : 'Свободных кодов в этой партии нет.'}</span>
         ${items.length ? html`<button id="print-now" type="button">Печатать</button>` : ''}
+        <nav class="qr-styles" aria-label="Стиль QR">Стиль QR:
+          ${Object.entries(QR_STYLES).map(([id, s]) => html`<a href="?style=${id}"${id === style ? html` aria-current="true"` : ''}>${s.name}</a>`)}
+        </nav>
       </div>
       <div class="sheet">${items.map((item) => html`<article class="tag">
         <div class="qr">${raw(item.svg)}</div>

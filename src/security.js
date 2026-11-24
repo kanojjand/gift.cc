@@ -91,8 +91,9 @@ const CONTENT_SECURITY_POLICY = [
   "media-src 'self'",
   "connect-src 'self'",
   /* Официальные плееры песен, которые покупатель выбрал сам. */
-  `frame-src ${MUSIC_FRAME_ORIGINS.join(' ')}`,
-  "frame-ancestors 'none'",
+  /* 'self' — страница /pitch показывает живое демо открытки во фрейме этого же сайта. */
+  `frame-src 'self' ${MUSIC_FRAME_ORIGINS.join(' ')}`,
+  "frame-ancestors 'self'",
   "base-uri 'none'",
   "form-action 'self'",
 ].join('; ');

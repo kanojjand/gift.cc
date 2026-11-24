@@ -13,6 +13,8 @@ import { OCCASION_TEXTS } from '../texts.js';
 import { renderCatalog } from '../views/catalog.js';
 import { renderForm } from '../views/form.js';
 import { goneInfo, landingPage } from '../views/pages.js';
+import { pitchPage } from '../views/pitch.js';
+import { qrSvg } from '../qr.js';
 
 const MINUTE_MS = 60 * 1000;
 const FORM_OVERHEAD_BYTES = 64 * 1024;
@@ -141,6 +143,9 @@ export function publicRoutes({ repo, storage, now, config }) {
   };
 
   routes.get('/', (c) => c.html(landingPage().value));
+  routes.get('/pitch', (c) => c.html(pitchPage().value));
+  // QR на главную сайта для последнего слайда — тем же стилем, что на открытках
+  routes.get('/pitch/qr.svg', (c) => c.body(qrSvg(config.baseUrl), 200, { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=3600' }));
 
   routes.get('/demo/:templateId', (c) => {
     const template = getTemplate(c.req.param('templateId'));

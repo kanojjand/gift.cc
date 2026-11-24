@@ -12,13 +12,13 @@ const MARK_PADDING_SHARE = 0.12;
 const SUPERSAMPLE = 4;
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-function codeMatrix(text) {
+export function codeMatrix(text) {
   const { modules } = QRCode.create(text, { errorCorrectionLevel: ERROR_CORRECTION });
   return { size: modules.size, isDark: (x, y) => modules.data[y * modules.size + x] === 1 };
 }
 
 /** The white box in the centre, in modules; its side has the code's parity so it sits on whole modules. */
-function markBox(size) {
+export function markBox(size) {
   let side = Math.round(size * MARK_BOX_SHARE);
   if ((size - side) % 2 !== 0) side += 1;
   const start = (size - side) / 2;
@@ -26,7 +26,7 @@ function markBox(size) {
 }
 
 /** Where the mark sits inside the box: top-left corner in modules and the scale from mark units to modules. */
-function markPlacement(box) {
+export function markPlacement(box) {
   const scale = (box.side * (1 - 2 * MARK_PADDING_SHARE)) / Math.max(MARK.width, MARK.height);
   return {
     scale,
